@@ -92,12 +92,7 @@ src/
 
 ## 🤝 Contributing
 
-This project is maintained by the Hack Indy organizing team. For questions or to get involved, reach out through our official channels.
-
-## 📄 License
-
-© 2026 Hack Indy • Purdue University Indianapolis
-
----
+This project is maintained by the Purdue Indy CS Club. For questions or to get involved, reach out through our official channels.
+(made by apat7)
 
 **Start Your Engines 🏁**
