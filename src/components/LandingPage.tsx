@@ -13,6 +13,7 @@ const FaultyTerminal = dynamic(() => import('@/components/FaultyTerminal'), {
 export default function Home() {
   const [openFAQ, setOpenFAQ] = useState<number | null>(null);
   const [lightsComplete, setLightsComplete] = useState(false);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const scheduleRef = useRef<HTMLDivElement>(null);
 
   // Racing lights animation on load
@@ -141,12 +142,27 @@ export default function Home() {
 
   return (
     <div className="min-h-screen relative" style={{ background: 'var(--bg-primary)' }}>
+      {/* MLH Trust Badge */}
+      <a
+        id="mlh-trust-badge"
+        className="mlh-badge"
+        href="https://mlh.io/na?utm_source=na-hackathon&utm_medium=TrustBadge&utm_campaign=2026-season&utm_content=white"
+        target="_blank"
+        rel="noopener noreferrer"
+      >
+        <img
+          src="https://s3.amazonaws.com/logged-assets/trust-badge/2026/mlh-trust-badge-2026-white.svg"
+          alt="Major League Hacking 2026 Hackathon Season"
+          style={{ width: '100%' }}
+        />
+      </a>
+
       {/* Racing Grid Background */}
       <div className="racing-grid-bg"></div>
       <div className="scanline-overlay"></div>
 
-      {/* Interactive Purdue Logo Sticker */}
-      <div className="sticker-bounds-container">
+      {/* Interactive Purdue Logo Sticker - hidden on mobile */}
+      <div className="sticker-bounds-container hide-on-mobile">
         <StickerPeel
           imageSrc="/Purdue Boilermakers Logo.png"
           width={180}
@@ -178,12 +194,12 @@ export default function Home() {
               className="flex items-center gap-3 cursor-pointer group"
               onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
             >
-              <span className="font-racing text-lg boiler-up-trigger relative" style={{ color: 'var(--racing-gold)' }}>
+              <span className="font-racing text-base sm:text-lg boiler-up-trigger relative" style={{ color: 'var(--racing-gold)' }}>
                 HACK<span style={{ color: 'var(--text-primary)', marginLeft: '0.5rem' }}>INDY</span>
               </span>
             </div>
 
-            {/* Nav Links */}
+            {/* Nav Links - Desktop */}
             <div className="hidden md:flex items-center gap-8">
               {[
                 { href: '#about', label: 'About', Icon: Icons.Flag },
@@ -211,12 +227,67 @@ export default function Home() {
               </Link>
             </div>
 
-            {/* CTA Button */}
+            {/* Right side: CTA + Hamburger */}
+            <div className="flex items-center gap-2">
+              {/* CTA Button - hidden when hamburger is shown */}
+              <a
+                href="https://forms.gle/your-interest-form-link"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="racing-btn text-sm py-1.5 px-3 hidden md:block nav-cta-btn"
+              >
+                Apply Now
+              </a>
+
+              {/* Hamburger Menu Button - shown below md breakpoint */}
+              <button
+                className="md:hidden flex flex-col justify-center items-center w-10 h-10 rounded border transition-colors"
+                style={{ borderColor: 'var(--border-gold)', color: 'var(--racing-gold)' }}
+                onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+                aria-label="Toggle mobile menu"
+              >
+                <span className={`hamburger-line ${mobileMenuOpen ? 'open' : ''}`} />
+                <span className={`hamburger-line ${mobileMenuOpen ? 'open' : ''}`} />
+                <span className={`hamburger-line ${mobileMenuOpen ? 'open' : ''}`} />
+              </button>
+            </div>
+          </div>
+        </div>
+
+        {/* Mobile Menu Overlay */}
+        <div className={`mobile-menu-overlay ${mobileMenuOpen ? 'open' : ''}`}>
+          <div className="mobile-menu-content">
+            {[
+              { href: '#about', label: 'About', Icon: Icons.Flag },
+              { href: '#schedule', label: 'Schedule', Icon: Icons.Clock },
+              { href: '#prizes', label: 'Prizes', Icon: Icons.Trophy },
+              { href: '#faq', label: 'FAQ', Icon: Icons.Question },
+              { href: '#sponsors', label: 'Sponsors', Icon: Icons.Wrench },
+            ].map((link) => (
+              <a
+                key={link.href}
+                href={link.href}
+                className="mobile-menu-link"
+                onClick={() => setMobileMenuOpen(false)}
+              >
+                <link.Icon className="w-5 h-5" />
+                {link.label}
+              </a>
+            ))}
+            <Link
+              href="/team"
+              className="mobile-menu-link"
+              onClick={() => setMobileMenuOpen(false)}
+            >
+              <Icons.Users className="w-5 h-5" />
+              Team
+            </Link>
             <a
               href="https://forms.gle/your-interest-form-link"
               target="_blank"
               rel="noopener noreferrer"
-              className="racing-btn text-sm py-1.5 px-3"
+              className="racing-btn text-base py-3 px-6 mt-4 w-full text-center"
+              onClick={() => setMobileMenuOpen(false)}
             >
               Apply Now
             </a>
@@ -275,43 +346,43 @@ export default function Home() {
           </div>
 
           {/* Main Title */}
-          <h1 className="font-racing text-6xl md:text-8xl lg:text-9xl mb-4 animate-fade-in-up delay-200">
+          <h1 className="font-racing text-4xl sm:text-6xl md:text-8xl lg:text-9xl mb-4 animate-fade-in-up delay-200">
             <span className="racing-title">HACK</span>
-            <span style={{ color: 'var(--text-primary)', marginLeft: '1rem' }}>INDY</span>
+            <span className="hero-indy-text">INDY</span>
           </h1>
 
-          <h2 className="font-racing text-5xl md:text-7xl lg:text-8xl mb-8 animate-fade-in-up delay-300" style={{ color: 'var(--racing-gold)' }}>
+          <h2 className="font-racing text-3xl sm:text-5xl md:text-7xl lg:text-8xl mb-6 sm:mb-8 animate-fade-in-up delay-300" style={{ color: 'var(--racing-gold)' }}>
             2026
           </h2>
 
           {/* Location & Date Badges */}
-          <div className="flex flex-wrap justify-center gap-4 mb-10 animate-fade-in-up delay-400">
-            <span className="racing-badge">
-              <Icons.MapPin className="w-4 h-4" />
+          <div className="flex flex-wrap justify-center gap-2 sm:gap-4 mb-8 sm:mb-10 animate-fade-in-up delay-400">
+            <span className="racing-badge text-xs sm:text-sm">
+              <Icons.MapPin className="w-3 h-3 sm:w-4 sm:h-4" />
               Purdue Indy
             </span>
-            <span className="racing-badge">
-              <Icons.Calendar className="w-4 h-4" />
-              Friday 3/27 - Sunday 3/29
+            <span className="racing-badge text-xs sm:text-sm">
+              <Icons.Calendar className="w-3 h-3 sm:w-4 sm:h-4" />
+              Fri 3/27 - Sun 3/29
             </span>
           </div>
 
           {/* CTA Buttons */}
-          <div className="flex flex-col gap-4 justify-center items-center animate-fade-in-up delay-500">
+          <div className="flex flex-col gap-3 sm:gap-4 justify-center items-center animate-fade-in-up delay-500 px-4">
             <a
               href="https://forms.gle/your-interest-form-link"
               target="_blank"
               rel="noopener noreferrer"
-              className="racing-btn text-lg px-10 py-4 flex items-center justify-center gap-3 w-72"
+              className="racing-btn text-sm sm:text-lg px-6 sm:px-10 py-3 sm:py-4 flex items-center justify-center gap-2 sm:gap-3 w-full max-w-xs sm:w-72"
             >
-              <Icons.Flag className="w-5 h-5" />
+              <Icons.Flag className="w-4 h-4 sm:w-5 sm:h-5" />
               Start Your Engines
             </a>
             <a
               href="https://devpost.com/hackindy2026"
               target="_blank"
               rel="noopener noreferrer"
-              className="w-72 text-center px-10 py-4 text-lg font-semibold border-2 rounded flex items-center justify-center gap-3 transition-all duration-300 hover:bg-[rgba(212,168,83,0.15)] hover:scale-105"
+              className="w-full max-w-xs sm:w-72 text-center px-6 sm:px-10 py-3 sm:py-4 text-sm sm:text-lg font-semibold border-2 rounded flex items-center justify-center gap-2 sm:gap-3 transition-all duration-300 hover:bg-[rgba(212,168,83,0.15)] hover:scale-105"
               style={{
                 borderColor: 'var(--racing-gold)',
                 color: 'var(--racing-gold)',
