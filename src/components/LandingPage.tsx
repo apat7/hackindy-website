@@ -89,11 +89,11 @@ export default function Home() {
     { logo: 'indyhackers logo transparent.png', name: 'Indy Hackers' },
     { logo: 'jane street logo transparent.png', name: 'Jane Street' },
     { logo: 'g-research ogo transparent.png', name: 'G-Research' },
-    { logo: 'nms group logo transparent.png', name: 'NMS Group' },
+    { logo: 'NM-logo.jpeg', name: 'North Mass Strategies' },
     { logo: 'sig logo.png', name: 'SIG' },
     { logo: 'kusari logo transparent.png', name: 'Kusari' },
     { logo: 'anu logo.jpeg', name: 'Anu' },
-    { logo: 'lilly logo transparent.png', name: 'Eli Lilly' },
+    { logo: 'Amway Logo Color.png', name: 'Amway' },
     { logo: 'realync logo transparent.png', name: 'Realync' },
     { logo: 'farm bureau insurance logo transparent.png', name: 'Farm Bureau' },
     { logo: 'crowe logo.jpg', name: 'Crowe' },
@@ -118,7 +118,7 @@ export default function Home() {
     { time: '12:00 - 1:00 AM', event: 'Midnight Snacks', location: 'Student Center' },
     { time: '7:00 - 8:00 AM', event: 'Breakfast', location: 'Student Center' },
     { time: '8:00 - 10:00 AM', event: 'Indy Hackers Workshop', location: 'Student Center' },
-    { time: '10:00 - 11:00 AM', event: 'Eli Lilly Workshop', location: 'Student Center' },
+    { time: '10:00 - 11:00 AM', event: 'Amway Workshop', location: 'Student Center' },
     { time: '11:00 - 12:00 PM', event: 'Unity VR Workshop', location: 'Student Center' },
     { time: '12:00 - 1:00 PM', event: 'Lunch', location: 'Student Center' },
     { time: '1:00 - 5:00 PM', event: 'Employer Networking Fair', location: 'Student Center' },
@@ -173,6 +173,31 @@ export default function Home() {
           lightingIntensity={0.15}
           initialPosition={{ x: 60, y: 150 }}
         />
+        {/* Hand-drawn style label */}
+        <div className="sticker-label">
+          <span className="sticker-label-text">drag me around!</span>
+          <svg className="sticker-arrow" viewBox="0 0 80 60" fill="none" xmlns="http://www.w3.org/2000/svg">
+            {/* Main swoopy curve */}
+            <path
+              d="M75 8 C60 12, 45 18, 30 32 Q20 44, 12 52"
+              stroke="currentColor"
+              strokeWidth="2.5"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              fill="none"
+            />
+            {/* Arrowhead */}
+            <path
+              d="M4 42 L12 52 L22 45"
+              transform="rotate(35, 12, 52)"
+              stroke="currentColor"
+              strokeWidth="2.5"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              fill="none"
+            />
+          </svg>
+        </div>
       </div>
 
       {/* Boilermaker Pete Easter Egg - Hidden Silhouette */}
