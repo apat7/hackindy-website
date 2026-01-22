@@ -177,7 +177,7 @@ export default function TeamPage() {
 
             {/* CTA Button */}
             <a
-              href="https://forms.gle/your-interest-form-link"
+              href="https://docs.google.com/forms/d/e/1FAIpQLSctlCayXv6TgBrIyFqtxw2hcVRwAI3RqJP9dsAMW-_AKgbDBg/viewform"
               target="_blank"
               rel="noopener noreferrer"
               className="racing-btn text-sm py-1.5 px-3"
@@ -360,7 +360,7 @@ export default function TeamPage() {
                 Home
               </Link>
               <a
-                href="https://forms.gle/your-interest-form-link"
+                href="https://docs.google.com/forms/d/e/1FAIpQLSctlCayXv6TgBrIyFqtxw2hcVRwAI3RqJP9dsAMW-_AKgbDBg/viewform"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="text-sm transition-colors hover:text-[var(--racing-gold)]"

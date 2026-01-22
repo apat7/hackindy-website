@@ -14,6 +14,7 @@ export default function Home() {
   const [openFAQ, setOpenFAQ] = useState<number | null>(null);
   const [lightsComplete, setLightsComplete] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [activeScheduleDay, setActiveScheduleDay] = useState<'friday' | 'saturday' | 'sunday'>('friday');
   const scheduleRef = useRef<HTMLDivElement>(null);
 
   // Racing lights animation on load
@@ -106,40 +107,49 @@ export default function Home() {
   ];
 
   const fridaySchedule = [
-    { time: '5:00 - 6:00 PM', event: 'Check In & Registration', location: 'Student Center' },
-    { time: '6:00 - 6:30 PM', event: 'Swag Distribution', location: 'Student Center' },
-    { time: '6:30 - 7:00 PM', event: 'CS Dept Head Petros Keynote', location: 'Student Center' },
-    { time: '7:00 - 7:30 PM', event: 'Dinner', location: 'Student Center' },
-    { time: '7:30 - 8:30 PM', event: 'Opening Ceremony', location: 'Student Center' },
-    { time: '8:30 - 9:00 PM', event: 'Team Building & Hacking Starts', location: 'Student Center' },
-    { time: '10:00 PM', event: 'Overnight Hacking Begins', location: 'Student Center' },
-    { time: '10:30 PM', event: 'Officer Led Workshop', location: 'Student Center' },
+    { time: '5:00 - 6:00 PM', event: 'Check In & Swag Distribution', location: 'Student Center Front Desk' },
+    { time: '6:00 - 6:30 PM', event: 'Co-President Om Janamanchi', location: 'Student Center Room 102' },
+    { time: '6:30 - 6:45 PM', event: 'CS Department Head, Dr. Petros Drineas', location: 'Student Center Room 102' },
+    { time: '6:45 - 7:00 PM', event: 'Senior Vice Provost, David Umulis', location: 'Student Center Room 102' },
+    { time: '7:00 - 7:15 PM', event: 'President of Purdue, Mung Chiang', location: 'Student Center Room 102' },
+    { time: '7:15 - 7:45 PM', event: 'Dinner', location: 'Student Center Rooms 102-110, 124-128' },
+    { time: '7:45 - 8:00 PM', event: 'Opening Ceremony - Hackathon Instructions', location: 'Student Center Room 102' },
+    { time: '8:00 - 11:59 PM', event: 'Overnight Hacking Begins', location: 'Student Center Rooms 102-110, 124-128' },
   ];
 
   const saturdaySchedule = [
-    { time: '12:00 - 1:00 AM', event: 'Midnight Snacks', location: 'Student Center' },
-    { time: '7:00 - 8:00 AM', event: 'Breakfast', location: 'Student Center' },
-    { time: '8:00 - 10:00 AM', event: 'Indy Hackers Workshop', location: 'Student Center' },
-    { time: '10:00 - 11:00 AM', event: 'Amway Workshop', location: 'Student Center' },
-    { time: '11:00 - 12:00 PM', event: 'Unity VR Workshop', location: 'Student Center' },
-    { time: '12:00 - 1:00 PM', event: 'Lunch', location: 'Student Center' },
-    { time: '1:00 - 5:00 PM', event: 'Employer Networking Fair', location: 'Student Center' },
-    { time: '5:00 - 6:00 PM', event: 'Tech Engineering Panel', location: 'Student Center' },
-    { time: '6:00 - 7:00 PM', event: 'Dinner', location: 'Student Center' },
-    { time: '7:00 - 9:00 PM', event: 'Video Game Tournament', location: 'Student Center' },
-    { time: '10:00 PM', event: 'Overnight Hacking Continues', location: 'Student Center' },
+    { time: '12:00 - 1:00 AM', event: 'Midnight Snacks', location: 'Student Center Rooms 102-110, 124-128' },
+    { time: '1:00 - 7:30 AM', event: 'Overnight Hacking Continues', location: 'Student Center Rooms 102-110, 124-128' },
+    { time: '7:30 - 8:30 AM', event: 'Breakfast', location: 'Student Center Rooms 102-110, 124-128' },
+    { time: '8:30 - 9:00 AM', event: 'Hacking Continues', location: 'Student Center Rooms 102-110, 124-128' },
+    { time: '9:00 - 10:00 AM', event: 'Workshop 1 — Austin Ottinger ANU Workshop', location: 'Student Center Room 102' },
+    { time: '10:00 - 11:00 AM', event: 'Hacking Continues', location: 'Student Center Rooms 102-110, 124-128' },
+    { time: '11:00 - 12:00 PM', event: 'Workshop 2 — Amiya Maji RCAC Workshop', location: 'Student Center Room 102' },
+    { time: '12:00 - 2:00 PM', event: 'Lunch', location: 'Student Center Rooms 102-110, 124-128' },
+    { time: '2:00 - 2:30 PM', event: 'Hacking Continues', location: 'Student Center Rooms 102-110, 124-128' },
+    { time: '2:30 - 3:30 PM', event: 'Workshop 3 — Katie Hughes Privacy Law & Data Ethics', location: 'Student Center Room 102' },
+    { time: '3:30 - 5:00 PM', event: 'Hacking Continues', location: 'Student Center Rooms 102-110, 124-128' },
+    { time: '5:00 - 7:00 PM', event: 'Engineering Panel, Moderator Quinton Pedrick', location: 'Student Center Room 102' },
+    { time: '7:00 - 8:00 PM', event: 'Dinner', location: 'Student Center Rooms 102-110, 124-128' },
+    { time: '8:00 - 10:00 PM', event: 'Video Game Tournament', location: 'Student Center Room 102' },
+    { time: '10:00 - 11:59 PM', event: 'Overnight Hacking Continues', location: 'Student Center Rooms 102-110, 124-128' },
   ];
 
   const sundaySchedule = [
-    { time: '12:00 - 1:00 AM', event: 'Midnight Snacks', location: 'Student Center' },
-    { time: '7:00 - 8:00 AM', event: 'Breakfast', location: 'Student Center' },
-    { time: '8:00 - 12:00 PM', event: 'Hacking Continues', location: 'Student Center' },
-    { time: '12:00 - 1:00 PM', event: 'Lunch', location: 'Student Center' },
-    { time: '1:00 - 4:00 PM', event: 'Hacking Continues', location: 'Student Center' },
-    { time: '4:00 PM', event: 'Project Submissions', location: 'Devpost Website' },
-    { time: '4:00 - 6:00 PM', event: 'Judging Symposium', location: 'Student Center' },
-    { time: '6:00 - 8:00 PM', event: 'Dinner', location: 'Student Center' },
-    { time: '8:00 - 10:00 PM', event: 'Closing Ceremony', location: 'Student Center' },
+    { time: '12:00 - 1:00 AM', event: 'Midnight Snacks', location: 'Student Center Rooms 102-110, 124-128' },
+    { time: '1:00 - 7:30 AM', event: 'Overnight Hacking Continues', location: 'Student Center Rooms 102-110, 124-128' },
+    { time: '7:30 - 8:30 AM', event: 'Breakfast', location: 'Student Center Rooms 102-110, 124-128' },
+    { time: '8:30 - 9:00 AM', event: 'Hacking Continues', location: 'Student Center Rooms 102-110, 124-128' },
+    { time: '9:00 - 10:00 AM', event: 'Workshop 4 — Ruthu Shankar Website Development', location: 'Student Center Room 102' },
+    { time: '10:00 - 11:00 AM', event: 'Hacking Continues', location: 'Student Center Rooms 102-110, 124-128' },
+    { time: '11:00 - 12:00 PM', event: 'Workshop 5 — Ben Cochran Claude AI Agents', location: 'Student Center Room 102' },
+    { time: '12:00 - 2:00 PM', event: 'Lunch', location: 'Student Center Rooms 102-110, 124-128' },
+    { time: '2:00 - 4:00 PM', event: 'Hacking Continues', location: 'Student Center Rooms 102-110, 124-128' },
+    { time: '4:00 PM', event: 'Project Submissions Due', location: 'Devpost Website' },
+    { time: '4:00 - 6:00 PM', event: 'Judging Submission', location: 'Student Center Room 101' },
+    { time: '6:00 - 7:00 PM', event: 'Dinner', location: 'Student Center Rooms 102-110, 124-128' },
+    { time: '7:00 - 7:30 PM', event: 'Final Judging Decisions', location: 'Student Center Room 102' },
+    { time: '7:30 - 8:30 PM', event: 'Closing Ceremony by Co-President Om Janamanchi', location: 'Student Center Room 102' },
   ];
 
   return (
@@ -258,7 +268,7 @@ export default function Home() {
             <div className="flex items-center gap-2">
               {/* CTA Button - hidden when hamburger is shown */}
               <a
-                href="https://forms.gle/your-interest-form-link"
+                href="https://docs.google.com/forms/d/e/1FAIpQLSctlCayXv6TgBrIyFqtxw2hcVRwAI3RqJP9dsAMW-_AKgbDBg/viewform"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="racing-btn text-sm py-1.5 px-3 hidden md:block nav-cta-btn"
@@ -310,7 +320,7 @@ export default function Home() {
               Team
             </Link>
             <a
-              href="https://forms.gle/your-interest-form-link"
+              href="https://docs.google.com/forms/d/e/1FAIpQLSctlCayXv6TgBrIyFqtxw2hcVRwAI3RqJP9dsAMW-_AKgbDBg/viewform"
               target="_blank"
               rel="noopener noreferrer"
               className="racing-btn text-base py-3 px-6 mt-4 w-full text-center"
@@ -397,7 +407,7 @@ export default function Home() {
           {/* CTA Buttons */}
           <div className="flex flex-col gap-3 sm:gap-4 justify-center items-center animate-fade-in-up delay-500 px-4">
             <a
-              href="https://forms.gle/your-interest-form-link"
+              href="https://docs.google.com/forms/d/e/1FAIpQLSctlCayXv6TgBrIyFqtxw2hcVRwAI3RqJP9dsAMW-_AKgbDBg/viewform"
               target="_blank"
               rel="noopener noreferrer"
               className="racing-btn text-sm sm:text-lg px-6 sm:px-10 py-3 sm:py-4 flex items-center justify-center gap-2 sm:gap-3 w-full max-w-xs sm:w-72"
@@ -487,10 +497,10 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Schedule Section - Horizontal Timeline */}
+      {/* Schedule Section - Tabbed Table Layout */}
       <section id="schedule" className="py-24 relative overflow-hidden">
-        <div className="max-w-7xl mx-auto px-4">
-          <div className="text-center mb-16 scroll-animate">
+        <div className="max-w-6xl mx-auto px-4">
+          <div className="text-center mb-12 scroll-animate">
             <h2 className="section-header">
               Race Weekend
             </h2>
@@ -499,144 +509,109 @@ export default function Home() {
             </p>
           </div>
 
-          {/* Scroll Controls */}
-          <div className="flex justify-between items-center mb-6">
-            <div className="flex items-center gap-3">
-              <span className="text-xs uppercase tracking-widest" style={{ color: 'var(--text-muted)' }}>
-                Scroll or drag →
+          {/* Day Tabs */}
+          <div className="schedule-tabs scroll-animate">
+            <button
+              className={`schedule-tab ${activeScheduleDay === 'friday' ? 'active' : ''}`}
+              onClick={() => setActiveScheduleDay('friday')}
+            >
+              <Icons.Flag className="w-4 h-4" />
+              <span className="schedule-tab-day">FRI</span>
+              <span className="schedule-tab-date">3/27</span>
+            </button>
+            <button
+              className={`schedule-tab schedule-tab-saturday ${activeScheduleDay === 'saturday' ? 'active' : ''}`}
+              onClick={() => setActiveScheduleDay('saturday')}
+            >
+              <Icons.Wrench className="w-4 h-4" />
+              <span className="schedule-tab-day">SAT</span>
+              <span className="schedule-tab-date">3/28</span>
+            </button>
+            <button
+              className={`schedule-tab schedule-tab-sunday ${activeScheduleDay === 'sunday' ? 'active' : ''}`}
+              onClick={() => setActiveScheduleDay('sunday')}
+            >
+              <Icons.Trophy className="w-4 h-4" />
+              <span className="schedule-tab-day">SUN</span>
+              <span className="schedule-tab-date">3/29</span>
+            </button>
+          </div>
+
+          {/* Schedule Table */}
+          <div className="schedule-table-wrapper scroll-animate" ref={scheduleRef}>
+            <div className="schedule-table-container">
+              {/* Table Header */}
+              <div className="schedule-table-header">
+                <div className="schedule-col-time">
+                  <Icons.Clock className="w-4 h-4" />
+                  <span>Time</span>
+                </div>
+                <div className="schedule-col-event">
+                  <Icons.Flag className="w-4 h-4" />
+                  <span>Event</span>
+                </div>
+                <div className="schedule-col-location">
+                  <Icons.MapPin className="w-4 h-4" />
+                  <span>Location</span>
+                </div>
+              </div>
+
+              {/* Table Body */}
+              <div className="schedule-table-body">
+                {(activeScheduleDay === 'friday' ? fridaySchedule :
+                  activeScheduleDay === 'saturday' ? saturdaySchedule :
+                    sundaySchedule
+                ).map((item, idx) => (
+                  <div
+                    key={`${activeScheduleDay}-${idx}`}
+                    className={`schedule-row ${item.event.toLowerCase().includes('hacking') ? 'schedule-row-hacking' :
+                      item.event.toLowerCase().includes('workshop') ? 'schedule-row-workshop' :
+                        item.event.toLowerCase().includes('dinner') || item.event.toLowerCase().includes('lunch') || item.event.toLowerCase().includes('breakfast') || item.event.toLowerCase().includes('snacks') ? 'schedule-row-food' :
+                          item.event.toLowerCase().includes('ceremony') || item.event.toLowerCase().includes('panel') ? 'schedule-row-highlight' :
+                            ''
+                      }`}
+                    style={{ animationDelay: `${idx * 0.03}s` }}
+                  >
+                    <div className="schedule-cell schedule-cell-time">
+                      <span className="schedule-time-text">{item.time}</span>
+                    </div>
+                    <div className="schedule-cell schedule-cell-event">
+                      <span className="schedule-event-text">{item.event}</span>
+                    </div>
+                    <div className="schedule-cell schedule-cell-location">
+                      <span className="schedule-location-text">{item.location}</span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+
+          {/* Day Info Footer */}
+          <div className="schedule-footer scroll-animate">
+            <div className="schedule-footer-info">
+              <span className="schedule-footer-label">
+                {activeScheduleDay === 'friday' ? 'Race Day 1 • Kickoff & Opening' :
+                  activeScheduleDay === 'saturday' ? 'Race Day 2 • Workshops & Hacking' :
+                    'Victory Lap • Submissions & Awards'}
               </span>
             </div>
-            <div className="flex gap-2">
-              <button
-                onClick={() => scrollSchedule('left')}
-                className="w-12 h-12 rounded-full flex items-center justify-center transition-all duration-300 hover:bg-[rgba(212,168,83,0.2)] hover:scale-110"
-                style={{ border: '2px solid var(--border-gold)', color: 'var(--racing-gold)' }}
-              >
-                <Icons.ChevronLeft className="w-5 h-5" />
-              </button>
-              <button
-                onClick={() => scrollSchedule('right')}
-                className="w-12 h-12 rounded-full flex items-center justify-center transition-all duration-300 hover:bg-[rgba(212,168,83,0.2)] hover:scale-110"
-                style={{ border: '2px solid var(--border-gold)', color: 'var(--racing-gold)' }}
-              >
-                <Icons.ChevronRight className="w-5 h-5" />
-              </button>
+            <div className="schedule-legend">
+              <div className="legend-item legend-workshop">
+                <span className="legend-dot"></span>
+                Workshop
+              </div>
+              <div className="legend-item legend-food">
+                <span className="legend-dot"></span>
+                Meal
+              </div>
+              <div className="legend-item legend-highlight">
+                <span className="legend-dot"></span>
+                Ceremony
+              </div>
             </div>
           </div>
         </div>
-
-        {/* Full-width Horizontal Scroll Container */}
-        <div
-          ref={scheduleRef}
-          className="schedule-timeline"
-        >
-          {/* Race Track Line */}
-          <div className="race-track-line" />
-
-          {/* Starting Flag */}
-          <div className="timeline-marker timeline-start">
-            <div className="marker-flag">
-              <Icons.Flag className="w-6 h-6" />
-            </div>
-            <span className="marker-label">START</span>
-          </div>
-
-          {/* Friday Day Marker */}
-          <div className="day-marker">
-            <div className="day-marker-badge">
-              <Icons.Flag className="w-5 h-5" />
-              <span>FRI 3/27</span>
-            </div>
-            <div className="day-marker-subtitle">Race Day 1</div>
-          </div>
-
-          {/* Friday Events */}
-          {fridaySchedule.map((item, idx) => (
-            <div key={`fri-${idx}`} className="event-card-wrapper" style={{ animationDelay: `${idx * 0.05}s` }}>
-              <div className="event-card">
-                <div className="event-time">
-                  <Icons.Clock className="w-3 h-3" />
-                  <span>{item.time}</span>
-                </div>
-                <h4 className="event-title">{item.event}</h4>
-                <p className="event-location">
-                  <Icons.MapPin className="w-3 h-3" />
-                  {item.location}
-                </p>
-              </div>
-              <div className="event-pip" />
-            </div>
-          ))}
-
-          {/* Saturday Day Marker */}
-          <div className="day-marker">
-            <div className="day-marker-badge day-marker-saturday">
-              <Icons.Wrench className="w-5 h-5" />
-              <span>SAT 3/28</span>
-            </div>
-            <div className="day-marker-subtitle">Race Day 2</div>
-          </div>
-
-          {/* Saturday Events */}
-          {saturdaySchedule.map((item, idx) => (
-            <div key={`sat-${idx}`} className="event-card-wrapper" style={{ animationDelay: `${idx * 0.05}s` }}>
-              <div className="event-card">
-                <div className="event-time">
-                  <Icons.Clock className="w-3 h-3" />
-                  <span>{item.time}</span>
-                </div>
-                <h4 className="event-title">{item.event}</h4>
-                <p className="event-location">
-                  <Icons.MapPin className="w-3 h-3" />
-                  {item.location}
-                </p>
-              </div>
-              <div className="event-pip" />
-            </div>
-          ))}
-
-          {/* Sunday Day Marker */}
-          <div className="day-marker">
-            <div className="day-marker-badge day-marker-sunday">
-              <Icons.Trophy className="w-5 h-5" />
-              <span>SUN 3/29</span>
-            </div>
-            <div className="day-marker-subtitle">Victory Lap</div>
-          </div>
-
-          {/* Sunday Events */}
-          {sundaySchedule.map((item, idx) => (
-            <div key={`sun-${idx}`} className="event-card-wrapper" style={{ animationDelay: `${idx * 0.05}s` }}>
-              <div className="event-card">
-                <div className="event-time">
-                  <Icons.Clock className="w-3 h-3" />
-                  <span>{item.time}</span>
-                </div>
-                <h4 className="event-title">{item.event}</h4>
-                <p className="event-location">
-                  <Icons.MapPin className="w-3 h-3" />
-                  {item.location}
-                </p>
-              </div>
-              <div className="event-pip" />
-            </div>
-          ))}
-
-          {/* Finish Flag */}
-          <div className="timeline-marker timeline-finish">
-            <div className="marker-flag checkered">
-              <Icons.Trophy className="w-6 h-6" />
-            </div>
-            <span className="marker-label">FINISH</span>
-          </div>
-
-          {/* Extra padding at end for scroll */}
-          <div className="w-16 flex-shrink-0" />
-        </div>
-
-        {/* Gradient Overlays for smooth edges */}
-        <div className="schedule-fade-left" />
-        <div className="schedule-fade-right" />
       </section>
 
       {/* Prizes Section */}
@@ -770,7 +745,7 @@ export default function Home() {
                         <span>
                           {' '}
                           <a
-                            href="https://forms.gle/your-interest-form-link"
+                            href="https://docs.google.com/forms/d/e/1FAIpQLSctlCayXv6TgBrIyFqtxw2hcVRwAI3RqJP9dsAMW-_AKgbDBg/viewform"
                             target="_blank"
                             rel="noopener noreferrer"
                           >
