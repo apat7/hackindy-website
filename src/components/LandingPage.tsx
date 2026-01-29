@@ -104,6 +104,7 @@ export default function Home() {
     { logo: 'brooksource logo transparent.png', name: 'Brooksource' },
     { logo: 'Github Logo.png', name: 'Github' },
     { logo: 'Pure Buttons Blue Gradient Logo.png', name: 'Pure Buttons', link: 'https://mlh.link/purebuttons' },
+    { logo: 'CSWN.png', name: 'CSWN' },
   ];
 
   const fridaySchedule = [
