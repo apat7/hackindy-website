@@ -870,6 +870,15 @@ export default function Home() {
               >
                 Devpost
               </a>
+              <a
+                href="https://github.com/MLH/mlh-policies/blob/main/code-of-conduct.md"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-sm transition-colors hover:text-[var(--racing-gold)]"
+                style={{ color: 'var(--text-secondary)' }}
+              >
+                Code of Conduct
+              </a>
             </div>
 
             {/* Social Links */}
