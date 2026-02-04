@@ -414,7 +414,7 @@ export default function Home() {
               className="racing-btn text-sm sm:text-lg px-6 sm:px-10 py-3 sm:py-4 flex items-center justify-center gap-2 sm:gap-3 w-full max-w-xs sm:w-72"
             >
               <Icons.Flag className="w-4 h-4 sm:w-5 sm:h-5" />
-              Start Your Engines
+              Sign Up Now!
             </a>
             <a
               href="https://devpost.com/hackindy2026"
