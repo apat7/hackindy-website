@@ -485,7 +485,7 @@ export default function Home() {
 
           <div className="racing-card corner-accent p-8 md:p-12 scroll-animate">
             <p className="text-lg leading-relaxed" style={{ color: 'var(--text-secondary)' }}>
-              Hack Indy is Purdue University in Indianapolis' largest student-run hackathon, bringing together over 200 students across countless majors to compete in a three-day overnight hackathon for exciting prizes. Open to everyone—no matter your experience level—Hack Indy is designed to provide an inclusive and impactful experience for all participants.
+              Hack Indy is Purdue University in Indianapolis' largest student-run hackathon, bringing together over 200 students, with a strong concentration in computer science, data science, artificial intelligence, and engineering, to compete in a three-day overnight hackathon. Open to everyone—no matter your experience level—Hack Indy is designed to provide an inclusive and impactful experience for all participants.
             </p>
             <p className="text-lg leading-relaxed mt-6" style={{ color: 'var(--text-secondary)' }}>
               You'll have the chance to attend industry-driven workshops, network with top executives in the Indianapolis tech scene, and learn from engineering panels. Beyond hacking, you can join video game tournaments, play fun games, win cool prizes, and enjoy free swag and food—all while building valuable skills and making unforgettable memories.
