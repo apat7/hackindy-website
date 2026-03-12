@@ -10,6 +10,100 @@ const FaultyTerminal = dynamic(() => import('@/components/FaultyTerminal'), {
   ssr: false,
 });
 
+function CountdownClock() {
+  const [timeLeft, setTimeLeft] = useState({ days: 0, hours: 0, minutes: 0, seconds: 0 });
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+    // Target Date: March 27, 2026 5:00 PM EST/EDT
+    const targetDate = new Date("2026-03-27T17:00:00-04:00").getTime();
+
+    const calculateTimeLeft = () => {
+      const now = new Date().getTime();
+      const difference = targetDate - now;
+
+      if (difference > 0) {
+        setTimeLeft({
+          days: Math.floor(difference / (1000 * 60 * 60 * 24)),
+          hours: Math.floor((difference % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60)),
+          minutes: Math.floor((difference % (1000 * 60 * 60)) / (1000 * 60)),
+          seconds: Math.floor((difference % (1000 * 60)) / 1000)
+        });
+      } else {
+        setTimeLeft({ days: 0, hours: 0, minutes: 0, seconds: 0 });
+      }
+    };
+
+    calculateTimeLeft();
+    const interval = setInterval(calculateTimeLeft, 1000);
+
+    return () => clearInterval(interval);
+  }, []);
+
+  if (!mounted) {
+    return (
+      <section className="py-24 px-4 relative min-h-[20rem] flex items-center justify-center z-10">
+        <div className="flex justify-center items-center h-32">
+          <div className="w-8 h-8 rounded-full border-4 border-t-transparent animate-spin" style={{ borderColor: 'var(--racing-gold)', borderTopColor: 'transparent' }}></div>
+        </div>
+      </section>
+    );
+  }
+
+  return (
+    <section className="py-6 sm:py-8 w-full relative flex items-center justify-center z-10 border-y border-[var(--border-gold)] overflow-hidden shadow-[0_0_30px_rgba(212,168,83,0.1)]" style={{ background: 'var(--bg-secondary)' }}>
+      {/* Sideways Stripes Background */}
+      <div className="absolute inset-0" style={{
+        background: 'repeating-linear-gradient(-45deg, transparent, transparent 45px, rgba(212, 168, 83, 0.05) 45px, rgba(212, 168, 83, 0.05) 90px)',
+        pointerEvents: 'none'
+      }}></div>
+
+      <div className="w-full max-w-6xl mx-auto flex flex-col md:flex-row items-center justify-between relative z-10 px-4 md:px-8 gap-4 md:gap-8">
+        <div className="text-center md:text-left animate-fade-in-up">
+          <h2 className="font-racing text-xl sm:text-2xl" style={{ color: 'var(--text-primary)' }}>
+            REGISTRATION CLOSED
+          </h2>
+          <p className="mt-1 sm:mt-2 text-xs sm:text-sm uppercase tracking-widest font-mono" style={{ color: 'var(--text-secondary)' }}>
+            Engines start in:
+          </p>
+        </div>
+
+        <div
+          className="flex items-center justify-center gap-2 sm:gap-4 font-racing text-3xl sm:text-4xl md:text-5xl lg:text-6xl text-center"
+          style={{ color: 'var(--racing-gold)' }}
+        >
+          <div className="flex flex-col items-center min-w-[3rem] sm:min-w-[4rem]">
+            <span suppressHydrationWarning>{timeLeft.days.toString().padStart(2, '0')}</span>
+            <span className="text-[10px] sm:text-xs font-body uppercase tracking-widest mt-1 opacity-70" style={{ color: 'var(--text-secondary)' }}>Days</span>
+          </div>
+
+          <span className="animate-pulse mb-3 sm:mb-4 opacity-50 text-[var(--racing-gold)]">:</span>
+
+          <div className="flex flex-col items-center min-w-[3rem] sm:min-w-[4rem]">
+            <span suppressHydrationWarning>{timeLeft.hours.toString().padStart(2, '0')}</span>
+            <span className="text-[10px] sm:text-xs font-body uppercase tracking-widest mt-1 opacity-70" style={{ color: 'var(--text-secondary)' }}>Hrs</span>
+          </div>
+
+          <span className="animate-pulse mb-3 sm:mb-4 opacity-50 text-[var(--racing-gold)]">:</span>
+
+          <div className="flex flex-col items-center min-w-[3rem] sm:min-w-[4rem]">
+            <span suppressHydrationWarning>{timeLeft.minutes.toString().padStart(2, '0')}</span>
+            <span className="text-[10px] sm:text-xs font-body uppercase tracking-widest mt-1 opacity-70" style={{ color: 'var(--text-secondary)' }}>Mins</span>
+          </div>
+
+          <span className="animate-pulse mb-3 sm:mb-4 opacity-50 text-[var(--racing-gold)]">:</span>
+
+          <div className="flex flex-col items-center min-w-[3rem] sm:min-w-[4rem]">
+            <span suppressHydrationWarning>{timeLeft.seconds.toString().padStart(2, '0')}</span>
+            <span className="text-[10px] sm:text-xs font-body uppercase tracking-widest mt-1 opacity-70" style={{ color: 'var(--text-secondary)' }}>Secs</span>
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+}
+
 export default function Home() {
   const [openFAQ, setOpenFAQ] = useState<number | null>(null);
   const [lightsComplete, setLightsComplete] = useState(false);
@@ -268,16 +362,6 @@ export default function Home() {
 
             {/* Right side: CTA + Hamburger */}
             <div className="flex items-center gap-2">
-              {/* CTA Button - hidden when hamburger is shown */}
-              <a
-                href="https://docs.google.com/forms/d/e/1FAIpQLSctlCayXv6TgBrIyFqtxw2hcVRwAI3RqJP9dsAMW-_AKgbDBg/viewform"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="racing-btn text-sm py-1.5 px-3 hidden md:block nav-cta-btn"
-              >
-                Apply Now
-              </a>
-
               {/* Hamburger Menu Button - shown below md breakpoint */}
               <button
                 className="md:hidden flex flex-col justify-center items-center w-10 h-10 rounded border transition-colors"
@@ -321,15 +405,6 @@ export default function Home() {
               <Icons.Users className="w-5 h-5" />
               Team
             </Link>
-            <a
-              href="https://docs.google.com/forms/d/e/1FAIpQLSctlCayXv6TgBrIyFqtxw2hcVRwAI3RqJP9dsAMW-_AKgbDBg/viewform"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="racing-btn text-base py-3 px-6 mt-4 w-full text-center"
-              onClick={() => setMobileMenuOpen(false)}
-            >
-              Apply Now
-            </a>
           </div>
         </div>
       </nav>
@@ -379,8 +454,8 @@ export default function Home() {
           {/* Registration Badge */}
           <div className="flex justify-center mb-8 animate-fade-in-up delay-100">
             <span className="racing-badge registration-badge">
-              <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></span>
-              Registration Open
+              <span className="w-2 h-2 rounded-full bg-red-500"></span>
+              Registration Closed
             </span>
           </div>
 
@@ -408,15 +483,13 @@ export default function Home() {
 
           {/* CTA Buttons */}
           <div className="flex flex-col gap-3 sm:gap-4 justify-center items-center animate-fade-in-up delay-500 px-4">
-            <a
-              href="https://docs.google.com/forms/d/e/1FAIpQLSctlCayXv6TgBrIyFqtxw2hcVRwAI3RqJP9dsAMW-_AKgbDBg/viewform"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="racing-btn text-sm sm:text-lg px-6 sm:px-10 py-3 sm:py-4 flex items-center justify-center gap-2 sm:gap-3 w-full max-w-xs sm:w-72"
+            <button
+              disabled
+              className="racing-btn text-sm sm:text-lg px-6 sm:px-10 py-3 sm:py-4 flex items-center justify-center gap-2 sm:gap-3 w-full max-w-xs sm:w-72 opacity-50 cursor-not-allowed"
             >
               <Icons.Flag className="w-4 h-4 sm:w-5 sm:h-5" />
-              Sign Up Now!
-            </a>
+              Registration Closed
+            </button>
             <a
               href="https://devpost.com/hackindy2026"
               target="_blank"
@@ -441,39 +514,8 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Stats Section */}
-      <section className="py-16 px-4 relative">
-        <div className="max-w-4xl mx-auto">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {/* Energy */}
-            <div className="stats-card scroll-animate animate-pulse-glow">
-              <div className="stats-icon" style={{ color: 'var(--racing-gold)' }}>
-                <Icons.Bolt className="w-5 h-5" />
-              </div>
-              <div className="stats-label">Energy</div>
-              <div className="stats-value" style={{ color: 'var(--racing-gold)' }}>MAXIMUM</div>
-            </div>
-
-            {/* Hackers */}
-            <div className="stats-card scroll-animate" style={{ animationDelay: '0.1s' }}>
-              <div className="stats-icon" style={{ color: 'var(--racing-gold)' }}>
-                <Icons.Users className="w-5 h-5" />
-              </div>
-              <div className="stats-label">Hackers</div>
-              <div className="stats-value">200+</div>
-            </div>
-
-            {/* Prizes */}
-            <div className="stats-card scroll-animate" style={{ animationDelay: '0.2s' }}>
-              <div className="stats-icon" style={{ color: 'var(--racing-gold)' }}>
-                <Icons.Dollar className="w-5 h-5" />
-              </div>
-              <div className="stats-label">Prizes</div>
-              <div className="stats-value" style={{ color: 'var(--racing-gold)' }}>$5K+</div>
-            </div>
-          </div>
-        </div>
-      </section>
+      {/* Countdown Section */}
+      <CountdownClock />
 
       {/* About Section */}
       <section id="about" className="py-24 px-4 relative">
