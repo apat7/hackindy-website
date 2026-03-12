@@ -105,6 +105,7 @@ export default function Home() {
     { logo: 'Github Logo.png', name: 'Github', link: 'https://github.com' },
     { logo: 'Pure Buttons Blue Gradient Logo.png', name: 'Pure Buttons', link: 'https://mlh.link/purebuttons' },
     { logo: 'CSWN.png', name: 'CSWN', link: 'https://www.cs.purdue.edu/cswn' },
+    { logo: 'craneclub.png', name: 'Crane Club' },
   ];
 
   const fridaySchedule = [
