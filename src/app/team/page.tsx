@@ -41,7 +41,7 @@ export default function TeamPage() {
       major: "Computer Science",
       interests: "Leadership, Technology, Innovation",
       email: "gupt1107@purdue.edu",
-      linkedin: "https://www.linkedin.com/in/abha-gupta/",
+      linkedin: "https://www.linkedin.com/in/abha-gupta-a26a2625b/",
       image: "/team/abha-gupta.jpg"
     },
     {
@@ -77,7 +77,7 @@ export default function TeamPage() {
       major: "Computer Science",
       interests: "Community Building, Technology",
       email: "sdash@purdue.edu",
-      linkedin: "https://www.linkedin.com/in/shely-dash/",
+      linkedin: "https://www.linkedin.com/in/shely-dash0712/",
       image: "/team/shely-dash.jpg"
     },
     {
@@ -323,7 +323,7 @@ export default function TeamPage() {
               Interested in helping organize Hack Indy? We're always looking for passionate students to join our team.
             </p>
             <a
-              href="mailto:hackindy@purdue.edu"
+              href="mailto:csclubin@purdue.edu"
               className="racing-btn text-lg px-10 py-4 inline-flex items-center gap-3"
             >
               <Icons.Wrench className="w-5 h-5" />
@@ -369,7 +369,7 @@ export default function TeamPage() {
                 Interest Form
               </a>
               <a
-                href="https://devpost.com/hackindy2026"
+                href="https://hack-indy-2026.devpost.com/"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="text-sm transition-colors hover:text-[var(--racing-gold)]"

@@ -202,14 +202,14 @@ export default function Home() {
     { logo: 'craneclub.png', name: 'Crane Club' },
   ];
 
-  const fridaySchedule = [
+  const fridaySchedule: any[] = [
     { time: '5:00 - 6:00 PM', event: 'Check In & Swag Distribution', location: 'Student Center Front Desk' },
     { time: '6:00 - 6:30 PM', event: 'Co-President Om Janamanchi', location: 'Student Center Room 102' },
     { time: '6:30 - 6:45 PM', event: 'CS Department Head, Dr. Petros Drineas', location: 'Student Center Room 102' },
     { time: '6:45 - 7:00 PM', event: 'Senior Vice Provost, David Umulis', location: 'Student Center Room 102' },
     { time: '7:00 - 7:15 PM', event: 'President of Purdue, Mung Chiang', location: 'Student Center Room 102' },
     { time: '7:15 - 7:45 PM', event: 'Dinner', location: 'Student Center Rooms 102-110, 124-128' },
-    { time: '7:45 - 8:00 PM', event: 'Opening Ceremony - Hackathon Instructions', location: 'Student Center Room 102' },
+    { time: '7:45 - 8:00 PM', event: 'Opening Ceremony - Hackathon Instructions', location: <a href="https://maps.google.com/?q=Lecture+Hall,+Purdue+University+Indianapolis" target="_blank" rel="noopener noreferrer" className="underline hover:text-[var(--racing-gold)]">Lecture Hall Room 100</a> },
     { time: '8:00 - 11:59 PM', event: 'Overnight Hacking Begins', location: 'Student Center Rooms 102-110, 124-128' },
   ];
 
@@ -491,7 +491,7 @@ export default function Home() {
               Registration Closed
             </button>
             <a
-              href="https://devpost.com/hackindy2026"
+              href="https://hack-indy-2026.devpost.com/"
               target="_blank"
               rel="noopener noreferrer"
               className="w-full max-w-xs sm:w-72 text-center px-6 sm:px-10 py-3 sm:py-4 text-sm sm:text-lg font-semibold border-2 rounded flex items-center justify-center gap-2 sm:gap-3 transition-all duration-300 hover:bg-[rgba(212,168,83,0.15)] hover:scale-105"
@@ -905,7 +905,7 @@ export default function Home() {
                 Interest Form
               </a>
               <a
-                href="https://devpost.com/hackindy2026"
+                href="https://hack-indy-2026.devpost.com/"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="text-sm transition-colors hover:text-[var(--racing-gold)]"
