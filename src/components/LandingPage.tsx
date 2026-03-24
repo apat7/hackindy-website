@@ -340,6 +340,7 @@ export default function Home() {
                 { href: '#prizes', label: 'Prizes', Icon: Icons.Trophy },
                 { href: '#faq', label: 'FAQ', Icon: Icons.Question },
                 { href: '#sponsors', label: 'Sponsors', Icon: Icons.Wrench },
+                { href: '#judges', label: 'Judges', Icon: Icons.Medal },
               ].map((link) => (
                 <a
                   key={link.href}
@@ -386,6 +387,7 @@ export default function Home() {
               { href: '#prizes', label: 'Prizes', Icon: Icons.Trophy },
               { href: '#faq', label: 'FAQ', Icon: Icons.Question },
               { href: '#sponsors', label: 'Sponsors', Icon: Icons.Wrench },
+              { href: '#judges', label: 'Judges', Icon: Icons.Medal },
             ].map((link) => (
               <a
                 key={link.href}
@@ -815,6 +817,73 @@ export default function Home() {
         </div>
       </section>
 
+      {/* Judges Section */}
+      <section id="judges" className="py-24 px-4 relative">
+        <div className="max-w-5xl mx-auto">
+          <div className="text-center mb-16 scroll-animate">
+            <h2 className="section-header">
+              Race Officials
+            </h2>
+            <p className="mt-4 text-lg" style={{ color: 'var(--text-secondary)' }}>
+              The panel evaluating your pit-lane innovations
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 scroll-animate">
+            {[
+              { name: 'Mike Hockerman', company: 'Trava Security', role: 'Lead Software Engineer', num: '01' },
+              { name: 'Jim Ulbright', company: 'Crowe LLC', role: 'AI/ML Engineer', num: '02' },
+              { name: 'Manideep Reddy Gillela', company: 'Amazon Web Services', role: 'Cloud Infrastructure Architect', num: '03' },
+            ].map((judge) => (
+              <div
+                key={judge.num}
+                className="racing-card corner-accent p-6 flex items-start gap-4 group hover:border-[var(--racing-gold)] transition-colors duration-300"
+              >
+                {/* Race Number Badge */}
+                <div
+                  className="shrink-0 w-12 h-12 rounded flex items-center justify-center font-racing text-xl"
+                  style={{ background: 'rgba(212,168,83,0.1)', border: '1px solid var(--border-gold)', color: 'var(--racing-gold)' }}
+                >
+                  {judge.num}
+                </div>
+                <div>
+                  <h3 className="font-racing text-lg" style={{ color: 'var(--text-primary)' }}>{judge.name}</h3>
+                  <p className="text-sm font-semibold mt-0.5" style={{ color: 'var(--racing-gold)' }}>{judge.company}</p>
+                  <p className="text-xs mt-1 uppercase tracking-widest" style={{ color: 'var(--text-secondary)' }}>{judge.role}</p>
+                </div>
+              </div>
+            ))}
+
+            {/* Lyna Nguyen */}
+            <div
+              className="racing-card corner-accent p-6 flex items-start gap-4 group hover:border-[var(--racing-gold)] transition-colors duration-300"
+            >
+              {/* Race Number Badge */}
+              <div
+                className="shrink-0 w-12 h-12 rounded flex items-center justify-center font-racing text-xl"
+                style={{ background: 'rgba(212,168,83,0.1)', border: '1px solid var(--border-gold)', color: 'var(--racing-gold)' }}
+              >
+                04
+              </div>
+              <div>
+                <div className="flex flex-wrap items-center gap-2 mb-0.5">
+                  <h3 className="font-racing text-lg" style={{ color: 'var(--text-primary)' }}>Lyna Nguyen</h3>
+                  <span
+                    className="racing-badge text-xs flex items-center gap-1.5"
+                    style={{ borderColor: 'var(--racing-gold)', color: 'var(--racing-gold)' }}
+                  >
+                    <span className="w-1.5 h-1.5 rounded-full" style={{ background: 'var(--racing-gold)' }} />
+                    MLH Coach
+                  </span>
+                </div>
+                <p className="text-sm font-semibold" style={{ color: 'var(--racing-gold)' }}>Apple</p>
+                <p className="text-xs mt-1 uppercase tracking-widest" style={{ color: 'var(--text-secondary)' }}>Engineering Project Manager</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
       {/* Sponsors Garage Section */}
       <section id="sponsors" className="py-24 px-4 relative">
         <div className="max-w-6xl mx-auto">
@@ -875,6 +944,7 @@ export default function Home() {
           </div>
         </div>
       </section>
+
 
       {/* Footer */}
       <footer className="footer py-12 px-4">
