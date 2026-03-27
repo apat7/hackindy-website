@@ -192,60 +192,59 @@ export default function Home() {
     { logo: 'realync logo transparent.png', name: 'Realync', link: 'https://realync.com' },
     { logo: 'farm bureau insurance logo transparent.png', name: 'Farm Bureau', link: 'https://www.infarmbureau.com' },
     { logo: 'crowe logo.jpg', name: 'Crowe', link: 'https://www.crowe.com' },
-    { logo: 'axiomatic consulting logo transparent.png', name: 'Axiomatic', link: 'https://getaxiomatic.com' },
     { logo: 'trava security logo.jpeg', name: 'Trava Security', link: 'https://travasecurity.com' },
     { logo: 'momentum3 logo transparent.png', name: 'Momentum3', link: 'https://momentum3.biz' },
-    { logo: 'brooksource logo transparent.png', name: 'Brooksource', link: 'https://brooksource.com' },
     { logo: 'Github Logo.png', name: 'Github', link: 'https://github.com' },
     { logo: 'Pure Buttons Blue Gradient Logo.png', name: 'Pure Buttons', link: 'https://mlh.link/purebuttons' },
     { logo: 'CSWN.png', name: 'CSWN', link: 'https://www.cs.purdue.edu/cswn' },
     { logo: 'craneclub.png', name: 'Crane Club' },
+    { logo: 'Featherless Hackathon Assets.png', name: 'Featherless AI', link: 'https://featherless.ai' },
   ];
 
   const fridaySchedule: any[] = [
-    { time: '5:00 - 6:00 PM', event: 'Check In & Swag Distribution', location: 'Student Center Front Desk' },
-    { time: '6:00 - 6:30 PM', event: 'Co-President Om Janamanchi', location: 'Student Center Room 102' },
-    { time: '6:30 - 6:45 PM', event: 'CS Department Head, Dr. Petros Drineas', location: 'Student Center Room 102' },
-    { time: '6:45 - 7:00 PM', event: 'Senior Vice Provost, David Umulis', location: 'Student Center Room 102' },
-    { time: '7:00 - 7:15 PM', event: 'President of Purdue, Mung Chiang', location: 'Student Center Room 102' },
-    { time: '7:15 - 7:45 PM', event: 'Dinner', location: 'Student Center Rooms 102-110, 124-128' },
-    { time: '7:45 - 8:00 PM', event: 'Opening Ceremony - Hackathon Instructions', location: <a href="https://maps.google.com/?q=Lecture+Hall,+Purdue+University+Indianapolis" target="_blank" rel="noopener noreferrer" className="underline hover:text-[var(--racing-gold)]">Lecture Hall Room 100</a> },
-    { time: '8:00 - 11:59 PM', event: 'Overnight Hacking Begins', location: 'Student Center Rooms 102-110, 124-128' },
+    { time: '4:30 - 5:00 PM', event: 'Officers Setup', location: <><a href="https://maps.google.com/?q=325+University+Blvd,+Indianapolis,+IN+46202" target="_blank" rel="noopener noreferrer" className="underline hover:text-[var(--racing-gold)]">Lecture Hall Room 100</a><span className="text-xs ml-1 opacity-60">(325 University Blvd, Indianapolis, IN 46202)</span></> },
+    { time: '5:00 - 6:00 PM', event: 'Check In & Swag Distribution', location: <><a href="https://maps.google.com/?q=325+University+Blvd,+Indianapolis,+IN+46202" target="_blank" rel="noopener noreferrer" className="underline hover:text-[var(--racing-gold)]">Lecture Hall Room 100</a><span className="text-xs ml-1 opacity-60">(325 University Blvd, Indianapolis, IN 46202)</span></> },
+    { time: '6:00 - 6:30 PM', event: 'Co-President Om Janamanchi', location: <><a href="https://maps.google.com/?q=325+University+Blvd,+Indianapolis,+IN+46202" target="_blank" rel="noopener noreferrer" className="underline hover:text-[var(--racing-gold)]">Lecture Hall Room 100</a><span className="text-xs ml-1 opacity-60">(325 University Blvd, Indianapolis, IN 46202)</span></> },
+    { time: '6:30 - 6:40 PM', event: 'Computer Science Department Head, Dr. Petros Drineas', location: <><a href="https://maps.google.com/?q=325+University+Blvd,+Indianapolis,+IN+46202" target="_blank" rel="noopener noreferrer" className="underline hover:text-[var(--racing-gold)]">Lecture Hall Room 100</a><span className="text-xs ml-1 opacity-60">(325 University Blvd, Indianapolis, IN 46202)</span></> },
+    { time: '6:40 - 6:50 PM', event: 'Senior Vice Provost Purdue University in Indianapolis, David Umulis', location: <><a href="https://maps.google.com/?q=325+University+Blvd,+Indianapolis,+IN+46202" target="_blank" rel="noopener noreferrer" className="underline hover:text-[var(--racing-gold)]">Lecture Hall Room 100</a><span className="text-xs ml-1 opacity-60">(325 University Blvd, Indianapolis, IN 46202)</span></> },
+    { time: '6:50 - 7:30 PM', event: 'Opening Ceremony - Hackathon Instructions', location: <><a href="https://maps.google.com/?q=325+University+Blvd,+Indianapolis,+IN+46202" target="_blank" rel="noopener noreferrer" className="underline hover:text-[var(--racing-gold)]">Lecture Hall Room 100</a><span className="text-xs ml-1 opacity-60">(325 University Blvd, Indianapolis, IN 46202)</span></> },
+    { time: '7:30 - 8:00 PM', event: 'MLH Workshop - Hacking with GitHub Copilot', location: <><a href="https://maps.google.com/?q=325+University+Blvd,+Indianapolis,+IN+46202" target="_blank" rel="noopener noreferrer" className="underline hover:text-[var(--racing-gold)]">Lecture Hall Room 100</a><span className="text-xs ml-1 opacity-60">(325 University Blvd, Indianapolis, IN 46202)</span></> },
+    { time: '8:00 - 8:30 PM', event: 'Dinner', location: <><a href="https://maps.google.com/?q=325+University+Blvd,+Indianapolis,+IN+46202" target="_blank" rel="noopener noreferrer" className="underline hover:text-[var(--racing-gold)]">Lecture Hall Room 100</a><span className="text-xs ml-1 opacity-60">(325 University Blvd, Indianapolis, IN 46202)</span></> },
+    { time: '8:30 - 11:59 PM', event: 'Overnight Hacking Begins', location: <><a href="https://maps.google.com/?q=520+Indiana+Ave,+Indianapolis,+IN+46202" target="_blank" rel="noopener noreferrer" className="underline hover:text-[var(--racing-gold)]">Purdue Student Center</a><span className="text-xs ml-1 opacity-60">Rooms 102-110, 124-128 (520 Indiana Ave, Indianapolis, IN 46202)</span></> },
   ];
 
   const saturdaySchedule = [
-    { time: '12:00 - 1:00 AM', event: 'Midnight Snacks', location: 'Student Center Rooms 102-110, 124-128' },
-    { time: '1:00 - 7:30 AM', event: 'Overnight Hacking Continues', location: 'Student Center Rooms 102-110, 124-128' },
-    { time: '7:30 - 8:30 AM', event: 'Breakfast', location: 'Student Center Rooms 102-110, 124-128' },
-    { time: '8:30 - 9:00 AM', event: 'Hacking Continues', location: 'Student Center Rooms 102-110, 124-128' },
-    { time: '9:00 - 10:00 AM', event: 'Workshop 1 — Austin Ottinger ANU Workshop', location: 'Student Center Room 102' },
-    { time: '10:00 - 11:00 AM', event: 'Hacking Continues', location: 'Student Center Rooms 102-110, 124-128' },
-    { time: '11:00 - 12:00 PM', event: 'Workshop 2 — Amiya Maji RCAC Workshop', location: 'Student Center Room 102' },
-    { time: '12:00 - 2:00 PM', event: 'Lunch', location: 'Student Center Rooms 102-110, 124-128' },
-    { time: '2:00 - 2:30 PM', event: 'Hacking Continues', location: 'Student Center Rooms 102-110, 124-128' },
-    { time: '2:30 - 3:30 PM', event: 'Workshop 3 — Katie Hughes Privacy Law & Data Ethics', location: 'Student Center Room 102' },
-    { time: '3:30 - 5:00 PM', event: 'Hacking Continues', location: 'Student Center Rooms 102-110, 124-128' },
-    { time: '5:00 - 7:00 PM', event: 'Engineering Panel, Moderator Quinton Pedrick', location: 'Student Center Room 102' },
-    { time: '7:00 - 8:00 PM', event: 'Dinner', location: 'Student Center Rooms 102-110, 124-128' },
-    { time: '8:00 - 10:00 PM', event: 'Video Game Tournament', location: 'Student Center Room 102' },
-    { time: '10:00 - 11:59 PM', event: 'Overnight Hacking Continues', location: 'Student Center Rooms 102-110, 124-128' },
+    { time: '12:00 - 1:00 AM', event: 'Midnight Snacks', location: <><a href="https://maps.google.com/?q=520+Indiana+Ave,+Indianapolis,+IN+46202" target="_blank" rel="noopener noreferrer" className="underline hover:text-[var(--racing-gold)]">Purdue Student Center</a><span className="text-xs ml-1 opacity-60">(520 Indiana Ave, Indianapolis, IN 46202)</span></> },
+    { time: '1:00 - 7:30 AM', event: 'Overnight Hacking Continues', location: <><a href="https://maps.google.com/?q=520+Indiana+Ave,+Indianapolis,+IN+46202" target="_blank" rel="noopener noreferrer" className="underline hover:text-[var(--racing-gold)]">Purdue Student Center</a><span className="text-xs ml-1 opacity-60">(520 Indiana Ave, Indianapolis, IN 46202)</span></> },
+    { time: '7:30 - 8:30 AM', event: 'Breakfast', location: <><a href="https://maps.google.com/?q=520+Indiana+Ave,+Indianapolis,+IN+46202" target="_blank" rel="noopener noreferrer" className="underline hover:text-[var(--racing-gold)]">Purdue Student Center</a><span className="text-xs ml-1 opacity-60">(520 Indiana Ave, Indianapolis, IN 46202)</span></> },
+    { time: '8:30 - 9:00 AM', event: 'Hacking Continues', location: <><a href="https://maps.google.com/?q=520+Indiana+Ave,+Indianapolis,+IN+46202" target="_blank" rel="noopener noreferrer" className="underline hover:text-[var(--racing-gold)]">Purdue Student Center</a><span className="text-xs ml-1 opacity-60">(520 Indiana Ave, Indianapolis, IN 46202)</span></> },
+    { time: '9:00 - 10:00 AM', event: 'Workshop 1 — Austin Ottinger ANU Workshop', location: <><a href="https://maps.google.com/?q=520+Indiana+Ave,+Indianapolis,+IN+46202" target="_blank" rel="noopener noreferrer" className="underline hover:text-[var(--racing-gold)]">Purdue Student Center</a><span className="text-xs ml-1 opacity-60">Room 102 (520 Indiana Ave, Indianapolis, IN 46202)</span></> },
+    { time: '10:00 - 11:00 AM', event: 'Hacking Continues', location: <><a href="https://maps.google.com/?q=520+Indiana+Ave,+Indianapolis,+IN+46202" target="_blank" rel="noopener noreferrer" className="underline hover:text-[var(--racing-gold)]">Purdue Student Center</a><span className="text-xs ml-1 opacity-60">(520 Indiana Ave, Indianapolis, IN 46202)</span></> },
+    { time: '11:00 - 12:00 PM', event: 'Workshop 2 — Amiya Maji RCAC Workshop', location: <><a href="https://maps.google.com/?q=520+Indiana+Ave,+Indianapolis,+IN+46202" target="_blank" rel="noopener noreferrer" className="underline hover:text-[var(--racing-gold)]">Purdue Student Center</a><span className="text-xs ml-1 opacity-60">Room 102 (520 Indiana Ave, Indianapolis, IN 46202)</span></> },
+    { time: '12:00 - 2:00 PM', event: 'Lunch', location: <><a href="https://maps.google.com/?q=520+Indiana+Ave,+Indianapolis,+IN+46202" target="_blank" rel="noopener noreferrer" className="underline hover:text-[var(--racing-gold)]">Purdue Student Center</a><span className="text-xs ml-1 opacity-60">(520 Indiana Ave, Indianapolis, IN 46202)</span></> },
+    { time: '2:00 - 2:30 PM', event: 'Hacking Continues', location: <><a href="https://maps.google.com/?q=520+Indiana+Ave,+Indianapolis,+IN+46202" target="_blank" rel="noopener noreferrer" className="underline hover:text-[var(--racing-gold)]">Purdue Student Center</a><span className="text-xs ml-1 opacity-60">(520 Indiana Ave, Indianapolis, IN 46202)</span></> },
+    { time: '2:30 - 3:30 PM', event: 'Workshop 3 — Katie Hughes Privacy Law & Data Ethics', location: <><a href="https://maps.google.com/?q=520+Indiana+Ave,+Indianapolis,+IN+46202" target="_blank" rel="noopener noreferrer" className="underline hover:text-[var(--racing-gold)]">Purdue Student Center</a><span className="text-xs ml-1 opacity-60">Room 102 (520 Indiana Ave, Indianapolis, IN 46202)</span></> },
+    { time: '3:30 - 5:00 PM', event: 'Hacking Continues', location: <><a href="https://maps.google.com/?q=520+Indiana+Ave,+Indianapolis,+IN+46202" target="_blank" rel="noopener noreferrer" className="underline hover:text-[var(--racing-gold)]">Purdue Student Center</a><span className="text-xs ml-1 opacity-60">(520 Indiana Ave, Indianapolis, IN 46202)</span></> },
+    { time: '5:00 - 7:00 PM', event: 'Tech Engineering Panel, Moderator Quinton Pedrick', location: <><a href="https://maps.google.com/?q=520+Indiana+Ave,+Indianapolis,+IN+46202" target="_blank" rel="noopener noreferrer" className="underline hover:text-[var(--racing-gold)]">Purdue Student Center</a><span className="text-xs ml-1 opacity-60">Room 102 (520 Indiana Ave, Indianapolis, IN 46202)</span></> },
+    { time: '7:00 - 8:00 PM', event: 'Dinner', location: <><a href="https://maps.google.com/?q=520+Indiana+Ave,+Indianapolis,+IN+46202" target="_blank" rel="noopener noreferrer" className="underline hover:text-[var(--racing-gold)]">Purdue Student Center</a><span className="text-xs ml-1 opacity-60">(520 Indiana Ave, Indianapolis, IN 46202)</span></> },
+    { time: '8:00 - 11:59 PM', event: 'Overnight Hacking Continues', location: <><a href="https://maps.google.com/?q=520+Indiana+Ave,+Indianapolis,+IN+46202" target="_blank" rel="noopener noreferrer" className="underline hover:text-[var(--racing-gold)]">Purdue Student Center</a><span className="text-xs ml-1 opacity-60">(520 Indiana Ave, Indianapolis, IN 46202)</span></> },
   ];
 
   const sundaySchedule = [
-    { time: '12:00 - 1:00 AM', event: 'Midnight Snacks', location: 'Student Center Rooms 102-110, 124-128' },
-    { time: '1:00 - 7:30 AM', event: 'Overnight Hacking Continues', location: 'Student Center Rooms 102-110, 124-128' },
-    { time: '7:30 - 8:30 AM', event: 'Breakfast', location: 'Student Center Rooms 102-110, 124-128' },
-    { time: '8:30 - 9:00 AM', event: 'Hacking Continues', location: 'Student Center Rooms 102-110, 124-128' },
-    { time: '9:00 - 10:00 AM', event: 'Workshop 4 — Ruthu Shankar Website Development', location: 'Student Center Room 102' },
-    { time: '10:00 - 11:00 AM', event: 'Hacking Continues', location: 'Student Center Rooms 102-110, 124-128' },
-    { time: '11:00 - 12:00 PM', event: 'Workshop 5 — Ben Cochran Claude AI Agents', location: 'Student Center Room 102' },
-    { time: '12:00 - 2:00 PM', event: 'Lunch', location: 'Student Center Rooms 102-110, 124-128' },
-    { time: '2:00 - 4:00 PM', event: 'Hacking Continues', location: 'Student Center Rooms 102-110, 124-128' },
+    { time: '12:00 - 1:00 AM', event: 'Midnight Snacks', location: <><a href="https://maps.google.com/?q=520+Indiana+Ave,+Indianapolis,+IN+46202" target="_blank" rel="noopener noreferrer" className="underline hover:text-[var(--racing-gold)]">Purdue Student Center</a><span className="text-xs ml-1 opacity-60">(520 Indiana Ave, Indianapolis, IN 46202)</span></> },
+    { time: '1:00 - 7:30 AM', event: 'Overnight Hacking Continues', location: <><a href="https://maps.google.com/?q=520+Indiana+Ave,+Indianapolis,+IN+46202" target="_blank" rel="noopener noreferrer" className="underline hover:text-[var(--racing-gold)]">Purdue Student Center</a><span className="text-xs ml-1 opacity-60">(520 Indiana Ave, Indianapolis, IN 46202)</span></> },
+    { time: '7:30 - 8:30 AM', event: 'Breakfast', location: <><a href="https://maps.google.com/?q=520+Indiana+Ave,+Indianapolis,+IN+46202" target="_blank" rel="noopener noreferrer" className="underline hover:text-[var(--racing-gold)]">Purdue Student Center</a><span className="text-xs ml-1 opacity-60">(520 Indiana Ave, Indianapolis, IN 46202)</span></> },
+    { time: '8:30 - 9:00 AM', event: 'Hacking Continues', location: <><a href="https://maps.google.com/?q=520+Indiana+Ave,+Indianapolis,+IN+46202" target="_blank" rel="noopener noreferrer" className="underline hover:text-[var(--racing-gold)]">Purdue Student Center</a><span className="text-xs ml-1 opacity-60">(520 Indiana Ave, Indianapolis, IN 46202)</span></> },
+    { time: '9:00 - 10:00 AM', event: 'Workshop 4 — Ruthu Shankar Website Development', location: <><a href="https://maps.google.com/?q=520+Indiana+Ave,+Indianapolis,+IN+46202" target="_blank" rel="noopener noreferrer" className="underline hover:text-[var(--racing-gold)]">Purdue Student Center</a><span className="text-xs ml-1 opacity-60">Room 102 (520 Indiana Ave, Indianapolis, IN 46202)</span></> },
+    { time: '10:00 - 11:00 AM', event: 'Hacking Continues', location: <><a href="https://maps.google.com/?q=520+Indiana+Ave,+Indianapolis,+IN+46202" target="_blank" rel="noopener noreferrer" className="underline hover:text-[var(--racing-gold)]">Purdue Student Center</a><span className="text-xs ml-1 opacity-60">(520 Indiana Ave, Indianapolis, IN 46202)</span></> },
+    { time: '11:00 - 12:00 PM', event: 'Workshop 5 — Ben Cochran Claude AI Agents', location: <><a href="https://maps.google.com/?q=520+Indiana+Ave,+Indianapolis,+IN+46202" target="_blank" rel="noopener noreferrer" className="underline hover:text-[var(--racing-gold)]">Purdue Student Center</a><span className="text-xs ml-1 opacity-60">Room 102 (520 Indiana Ave, Indianapolis, IN 46202)</span></> },
+    { time: '12:00 - 2:00 PM', event: 'Lunch', location: <><a href="https://maps.google.com/?q=520+Indiana+Ave,+Indianapolis,+IN+46202" target="_blank" rel="noopener noreferrer" className="underline hover:text-[var(--racing-gold)]">Purdue Student Center</a><span className="text-xs ml-1 opacity-60">(520 Indiana Ave, Indianapolis, IN 46202)</span></> },
+    { time: '2:00 - 4:00 PM', event: 'Hacking Continues', location: <><a href="https://maps.google.com/?q=520+Indiana+Ave,+Indianapolis,+IN+46202" target="_blank" rel="noopener noreferrer" className="underline hover:text-[var(--racing-gold)]">Purdue Student Center</a><span className="text-xs ml-1 opacity-60">(520 Indiana Ave, Indianapolis, IN 46202)</span></> },
     { time: '4:00 PM', event: 'Project Submissions Due', location: 'Devpost Website' },
-    { time: '4:00 - 6:00 PM', event: 'Judging Submission', location: 'Student Center Room 101' },
-    { time: '6:00 - 7:00 PM', event: 'Dinner', location: 'Student Center Rooms 102-110, 124-128' },
-    { time: '7:00 - 7:30 PM', event: 'Final Judging Decisions', location: 'Student Center Room 102' },
-    { time: '7:30 - 8:30 PM', event: 'Closing Ceremony by Co-President Om Janamanchi', location: 'Student Center Room 102' },
+    { time: '4:00 - 6:00 PM', event: 'Judging Submission', location: <><a href="https://maps.google.com/?q=402+N+Blackford+St,+Indianapolis,+IN+46202" target="_blank" rel="noopener noreferrer" className="underline hover:text-[var(--racing-gold)]">LD Room 010</a><span className="text-xs ml-1 opacity-60">(402 N. Blackford St, Indianapolis, IN 46202)</span></> },
+    { time: '6:00 - 7:00 PM', event: 'Dinner', location: <><a href="https://maps.google.com/?q=402+N+Blackford+St,+Indianapolis,+IN+46202" target="_blank" rel="noopener noreferrer" className="underline hover:text-[var(--racing-gold)]">LD Room 010</a><span className="text-xs ml-1 opacity-60">(402 N. Blackford St, Indianapolis, IN 46202)</span></> },
+    { time: '7:00 - 7:30 PM', event: 'Final Judging Decisions', location: <><a href="https://maps.google.com/?q=402+N+Blackford+St,+Indianapolis,+IN+46202" target="_blank" rel="noopener noreferrer" className="underline hover:text-[var(--racing-gold)]">LD Room 010</a><span className="text-xs ml-1 opacity-60">(402 N. Blackford St, Indianapolis, IN 46202)</span></> },
+    { time: '7:30 - 8:30 PM', event: 'Closing Ceremony by Co-President Om Janamanchi', location: <><a href="https://maps.google.com/?q=402+N+Blackford+St,+Indianapolis,+IN+46202" target="_blank" rel="noopener noreferrer" className="underline hover:text-[var(--racing-gold)]">LD Room 010</a><span className="text-xs ml-1 opacity-60">(402 N. Blackford St, Indianapolis, IN 46202)</span></> },
   ];
 
   return (
@@ -833,7 +832,6 @@ export default function Home() {
             {[
               { name: 'Mike Hockerman', company: 'Trava Security', role: 'Lead Software Engineer', num: '01' },
               { name: 'Jim Ulbright', company: 'Crowe LLC', role: 'AI/ML Engineer', num: '02' },
-              { name: 'Manideep Reddy Gillela', company: 'Amazon Web Services', role: 'Cloud Infrastructure Architect', num: '03' },
             ].map((judge) => (
               <div
                 key={judge.num}
@@ -853,6 +851,32 @@ export default function Home() {
                 </div>
               </div>
             ))}
+
+            {/* Manideep Reddy Gillela - Online Mentor */}
+            <div
+              className="racing-card corner-accent p-6 flex items-start gap-4 group hover:border-[var(--racing-gold)] transition-colors duration-300"
+            >
+              <div
+                className="shrink-0 w-12 h-12 rounded flex items-center justify-center font-racing text-xl"
+                style={{ background: 'rgba(212,168,83,0.1)', border: '1px solid var(--border-gold)', color: 'var(--racing-gold)' }}
+              >
+                03
+              </div>
+              <div>
+                <div className="flex flex-wrap items-center gap-2 mb-0.5">
+                  <h3 className="font-racing text-lg" style={{ color: 'var(--text-primary)' }}>Manideep Reddy Gillela</h3>
+                  <span
+                    className="racing-badge text-xs flex items-center gap-1.5"
+                    style={{ borderColor: 'var(--racing-gold)', color: 'var(--racing-gold)' }}
+                  >
+                    <span className="w-1.5 h-1.5 rounded-full" style={{ background: 'var(--racing-gold)' }} />
+                    Online
+                  </span>
+                </div>
+                <p className="text-sm font-semibold" style={{ color: 'var(--racing-gold)' }}>Amazon Web Services</p>
+                <p className="text-xs mt-1 uppercase tracking-widest" style={{ color: 'var(--text-secondary)' }}>Online Mentor</p>
+              </div>
+            </div>
 
             {/* Lyna Nguyen */}
             <div
