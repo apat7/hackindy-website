@@ -109,6 +109,8 @@ export default function Home() {
   const [lightsComplete, setLightsComplete] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [activeScheduleDay, setActiveScheduleDay] = useState<'friday' | 'saturday' | 'sunday'>('friday');
+  const [prizesRevealed, setPrizesRevealed] = useState(false);
+  const [prizeCountdown, setPrizeCountdown] = useState({ hours: 0, minutes: 0, seconds: 0 });
   const scheduleRef = useRef<HTMLDivElement>(null);
 
   // Racing lights animation on load
@@ -117,6 +119,28 @@ export default function Home() {
       setLightsComplete(true);
     }, 2000);
     return () => clearTimeout(timer);
+  }, []);
+
+  // Prize reveal timer — reveals at 6 PM EDT on March 27, 2026
+  useEffect(() => {
+    const revealTime = new Date('2026-03-27T18:00:00-04:00').getTime();
+    const tick = () => {
+      const now = Date.now();
+      const diff = revealTime - now;
+      if (diff <= 0) {
+        setPrizesRevealed(true);
+        setPrizeCountdown({ hours: 0, minutes: 0, seconds: 0 });
+      } else {
+        setPrizesRevealed(false);
+        const h = Math.floor(diff / (1000 * 60 * 60));
+        const m = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+        const s = Math.floor((diff % (1000 * 60)) / 1000);
+        setPrizeCountdown({ hours: h, minutes: m, seconds: s });
+      }
+    };
+    tick();
+    const interval = setInterval(tick, 1000);
+    return () => clearInterval(interval);
   }, []);
 
   // Scroll animation observer
@@ -666,66 +690,165 @@ export default function Home() {
             <h2 className="section-header">
               Victory Lane
             </h2>
-            <p className="mt-4 text-lg" style={{ color: 'var(--text-secondary)' }}>
-              Over $5,000+ in prizes await the winners
-            </p>
           </div>
 
-          {/* Podium Layout */}
-          <div className="podium-container scroll-animate">
-            {/* 2nd Place - Left */}
-            <div className="podium-place podium-second">
-              <div className="podium-card">
-                <div className="podium-position">2</div>
-                <div className="podium-icon">
-                  <Icons.Medal className="w-10 h-10" />
+          {prizesRevealed ? (
+            <>
+              {/* Podium Layout */}
+              <div className="podium-container">
+                {/* 2nd Place - Left */}
+                <div className="podium-place podium-second">
+                  <div className="podium-card">
+                    <div className="podium-position">2</div>
+                    <div className="podium-icon">
+                      <Icons.Medal className="w-10 h-10" />
+                    </div>
+                    <h3 className="podium-title">2nd Place</h3>
+                    <p className="podium-subtitle">Runner Up</p>
+                  </div>
+                  <div className="podium-stand podium-stand-2">
+                    <span>II</span>
+                  </div>
                 </div>
-                <h3 className="podium-title">2nd Place</h3>
-                <p className="podium-subtitle">Runner Up</p>
-                <div className="podium-prize">TBA</div>
-              </div>
-              <div className="podium-stand podium-stand-2">
-                <span>II</span>
-              </div>
-            </div>
 
-            {/* 1st Place - Center (Elevated) */}
-            <div className="podium-place podium-first">
-              <div className="podium-card podium-card-champion">
-                <div className="champion-glow"></div>
-                <div className="podium-position podium-position-gold">1</div>
-                <div className="podium-icon podium-icon-champion">
-                  <Icons.Trophy className="w-14 h-14" />
+                {/* 1st Place - Center (Elevated) */}
+                <div className="podium-place podium-first">
+                  <div className="podium-card podium-card-champion">
+                    <div className="champion-glow"></div>
+                    <div className="podium-position podium-position-gold">1</div>
+                    <div className="podium-icon podium-icon-champion">
+                      <Icons.Trophy className="w-14 h-14" />
+                    </div>
+                    <h3 className="podium-title podium-title-champion">Grand Prize</h3>
+                    <p className="podium-subtitle">1st Place Overall Winner</p>
+                  </div>
+                  <div className="podium-stand podium-stand-1">
+                    <span>I</span>
+                  </div>
                 </div>
-                <h3 className="podium-title podium-title-champion">Grand Prize</h3>
-                <p className="podium-subtitle">1st Place Overall Winner</p>
-                <div className="podium-prize podium-prize-champion">TBA</div>
-              </div>
-              <div className="podium-stand podium-stand-1">
-                <span>I</span>
-              </div>
-            </div>
 
-            {/* 3rd Place - Right */}
-            <div className="podium-place podium-third">
-              <div className="podium-card">
-                <div className="podium-position">3</div>
-                <div className="podium-icon">
-                  <Icons.Medal className="w-10 h-10" />
+                {/* 3rd Place - Right */}
+                <div className="podium-place podium-third">
+                  <div className="podium-card">
+                    <div className="podium-position">3</div>
+                    <div className="podium-icon">
+                      <Icons.Medal className="w-10 h-10" />
+                    </div>
+                    <h3 className="podium-title">3rd Place</h3>
+                    <p className="podium-subtitle">Second Runner Up</p>
+                  </div>
+                  <div className="podium-stand podium-stand-3">
+                    <span>III</span>
+                  </div>
                 </div>
-                <h3 className="podium-title">3rd Place</h3>
-                <p className="podium-subtitle">Second Runner Up</p>
-                <div className="podium-prize">TBA</div>
               </div>
-              <div className="podium-stand podium-stand-3">
-                <span>III</span>
-              </div>
-            </div>
-          </div>
 
-          <p className="text-center mt-12 text-sm" style={{ color: 'var(--text-muted)' }}>
-            + Sponsor prizes and special categories announced at the event!
-          </p>
+              {/* Featherless Opt-In Prize */}
+              <div className="mt-16">
+                <h3 className="text-center font-racing text-2xl mb-2" style={{ color: 'var(--text-primary)' }}>Opt-In Sponsor Prize</h3>
+                <p className="text-center text-sm mb-8" style={{ color: 'var(--text-secondary)' }}>Use Featherless AI in your project to be eligible</p>
+                <div className="racing-card corner-accent p-6 md:p-8 flex flex-col md:flex-row items-center md:items-start gap-6 hover:border-[var(--racing-gold)] transition-colors duration-300" style={{ borderColor: 'var(--border-gold)' }}>
+                  <img src="/sponsors/Featherless Hackathon Assets.png" alt="Featherless AI" className="w-24 h-24 object-contain shrink-0" />
+                  <div className="flex-1 text-center md:text-left">
+                    <p className="text-xs uppercase tracking-widest font-mono mb-1" style={{ color: 'var(--text-muted)' }}>Opt-In Sponsor Prize</p>
+                    <h4 className="font-racing text-xl mb-3" style={{ color: 'var(--text-primary)' }}>Featherless AI Credits</h4>
+                    <p className="text-sm mb-4" style={{ color: 'var(--text-secondary)' }}>Integrate Featherless AI into your project to be eligible for bonus credits on top of your overall prize.</p>
+                    <div className="flex flex-wrap justify-center md:justify-start gap-3">
+                      <span className="racing-badge text-sm">🥇 1st — $300 Credits</span>
+                      <span className="racing-badge text-sm">🥈 2nd — $150 Credits</span>
+                      <span className="racing-badge text-sm">🥉 3rd — $75 Credits</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* MLH Category Prizes */}
+              <div className="mt-16">
+                <h3 className="text-center font-racing text-2xl mb-2" style={{ color: 'var(--text-primary)' }}>Sponsor Category Prizes</h3>
+                <p className="text-center text-sm mb-10" style={{ color: 'var(--text-secondary)' }}>Presented by Major League Hacking</p>
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {[
+                    {
+                      category: 'Best Use of ElevenLabs',
+                      prize: '🎧 Wireless Earbuds',
+                      description: 'Deploy natural, human-sounding audio with ElevenLabs. Build rich, immersive audio experiences powered by AI.',
+                    },
+                    {
+                      category: 'Best Use of Gemini API',
+                      prize: '🎁 Google Swag Kits',
+                      description: 'Push the boundaries of AI with Google Gemini. Build chatbots, content generators, code assistants, and more.',
+                    },
+                    {
+                      category: 'Best Use of Solana',
+                      prize: '💳 Ledger Nano S Plus',
+                      description: 'Build fast, efficient, and scalable apps on the Solana blockchain with near-zero transaction costs.',
+                    },
+                    {
+                      category: 'Best Use of Vultr',
+                      prize: '🖥️ Portable Screens',
+                      description: 'Harness Vultr\'s cloud compute and GPU infrastructure to power high-performance and AI-driven applications.',
+                    },
+                    {
+                      category: 'Best Use of MongoDB Atlas',
+                      prize: '🔧 M5Stack IoT Kit',
+                      description: 'Store and manage all your data with MongoDB Atlas — free tier available, no credit card required.',
+                    },
+                  ].map((mlh) => (
+                    <div
+                      key={mlh.category}
+                      className="racing-card corner-accent p-5 flex flex-col gap-3 hover:border-[var(--racing-gold)] transition-colors duration-300"
+                    >
+                      <div>
+                        <p className="text-xs uppercase tracking-widest font-mono mb-1" style={{ color: 'var(--text-muted)' }}>MLH Prize</p>
+                        <h4 className="font-racing text-base" style={{ color: 'var(--text-primary)' }}>{mlh.category}</h4>
+                      </div>
+                      <div className="font-semibold text-sm" style={{ color: 'var(--racing-gold)' }}>{mlh.prize}</div>
+                      <p className="text-xs leading-relaxed" style={{ color: 'var(--text-secondary)' }}>{mlh.description}</p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </>
+          ) : (
+            /* Locked State */
+            <div className="racing-card corner-accent p-10 md:p-16 flex flex-col items-center justify-center gap-6 scroll-animate" style={{ borderColor: 'var(--border-gold)' }}>
+              {/* Lock Icon */}
+              <div
+                className="w-20 h-20 rounded-full flex items-center justify-center"
+                style={{ background: 'rgba(212,168,83,0.1)', border: '2px solid var(--border-gold)' }}
+              >
+                <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ color: 'var(--racing-gold)' }}>
+                  <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
+                  <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+                </svg>
+              </div>
+
+              <div className="text-center">
+                <h3 className="font-racing text-2xl md:text-3xl mb-2" style={{ color: 'var(--racing-gold)' }}>Prizes Locked</h3>
+                <p className="text-sm uppercase tracking-widest" style={{ color: 'var(--text-secondary)' }}>Revealed at the Closing Ceremony — 6:00 PM</p>
+              </div>
+
+              {/* Countdown */}
+              <div className="flex items-center gap-3 font-racing text-4xl md:text-5xl" style={{ color: 'var(--racing-gold)' }}>
+                <div className="flex flex-col items-center">
+                  <span suppressHydrationWarning>{String(prizeCountdown.hours).padStart(2, '0')}</span>
+                  <span className="text-xs font-body uppercase tracking-widest mt-1 opacity-60" style={{ color: 'var(--text-secondary)' }}>Hrs</span>
+                </div>
+                <span className="animate-pulse mb-5 opacity-50">:</span>
+                <div className="flex flex-col items-center">
+                  <span suppressHydrationWarning>{String(prizeCountdown.minutes).padStart(2, '0')}</span>
+                  <span className="text-xs font-body uppercase tracking-widest mt-1 opacity-60" style={{ color: 'var(--text-secondary)' }}>Mins</span>
+                </div>
+                <span className="animate-pulse mb-5 opacity-50">:</span>
+                <div className="flex flex-col items-center">
+                  <span suppressHydrationWarning>{String(prizeCountdown.seconds).padStart(2, '0')}</span>
+                  <span className="text-xs font-body uppercase tracking-widest mt-1 opacity-60" style={{ color: 'var(--text-secondary)' }}>Secs</span>
+                </div>
+              </div>
+
+              <p className="text-xs font-mono opacity-40" style={{ color: 'var(--text-muted)' }}>Stay tuned — prizes drop at 18:00 EDT</p>
+            </div>
+          )}
         </div>
       </section>
 
