@@ -10,94 +10,198 @@ const FaultyTerminal = dynamic(() => import('@/components/FaultyTerminal'), {
   ssr: false,
 });
 
-function CountdownClock() {
-  const [timeLeft, setTimeLeft] = useState({ days: 0, hours: 0, minutes: 0, seconds: 0 });
+// Parse a schedule time string like "2:30 - 3:30 PM" or "4:00 PM" into minutes-from-midnight
+// relative to a given date. Returns [startMins, endMins].
+function parseScheduleTime(timeStr: string, baseDate: Date): [number, number] {
+  // Normalize: strip leading/trailing whitespace
+  const str = timeStr.trim();
+
+  // Match patterns like "4:00 PM" or "4:00 - 6:00 PM" or "12:00 - 1:00 AM"
+  const rangeMatch = str.match(/^(\d{1,2}:\d{2})\s*-\s*(\d{1,2}:\d{2})\s*(AM|PM)$/i);
+  const singleMatch = str.match(/^(\d{1,2}:\d{2})\s*(AM|PM)$/i);
+
+  const toMins = (hhmm: string, meridiem: string): number => {
+    const [h, m] = hhmm.split(':').map(Number);
+    let hour = h % 12;
+    if (meridiem.toUpperCase() === 'PM') hour += 12;
+    return hour * 60 + m;
+  };
+
+  // Helper: guess meridiem for start when only end meridiem is given.
+  // In 12-hour clock, 12 is the "wrap-around" hour (12 AM = midnight, 12 PM = noon).
+  // Normalize both hours with % 12 so that 12 → 0 before comparing.
+  const guessMeridiem = (startHhmm: string, endHhmm: string, endMeridiem: string): string => {
+    const sh = parseInt(startHhmm) % 12; // 12 → 0, 1–11 unchanged
+    const eh = parseInt(endHhmm)   % 12;
+    // If adjusted start > adjusted end, a meridiem boundary is crossed
+    if (sh > eh) {
+      return endMeridiem.toUpperCase() === 'PM' ? 'AM' : 'PM';
+    }
+    return endMeridiem;
+  };
+
+  if (rangeMatch) {
+    const [, startHhmm, endHhmm, endMeridiem] = rangeMatch;
+    const startMeridiem = guessMeridiem(startHhmm, endHhmm, endMeridiem);
+    return [toMins(startHhmm, startMeridiem), toMins(endHhmm, endMeridiem)];
+  }
+
+  if (singleMatch) {
+    const [, hhmm, meridiem] = singleMatch;
+    const mins = toMins(hhmm, meridiem);
+    return [mins, mins + 30]; // treat single-time events as 30-min window
+  }
+
+  return [-1, -1]; // unparseable
+}
+
+type ScheduleItem = { time: string; event: string; location: React.ReactNode };
+
+function LiveNowBanner({ fridaySchedule, saturdaySchedule, sundaySchedule }: {
+  fridaySchedule: ScheduleItem[];
+  saturdaySchedule: ScheduleItem[];
+  sundaySchedule: ScheduleItem[];
+}) {
   const [mounted, setMounted] = useState(false);
+  const [currentItem, setCurrentItem] = useState<ScheduleItem | null>(null);
+  const [nextItem, setNextItem] = useState<ScheduleItem | null>(null);
 
   useEffect(() => {
     setMounted(true);
-    // Target Date: March 27, 2026 5:00 PM EST/EDT
-    const targetDate = new Date("2026-03-27T17:00:00-04:00").getTime();
 
-    const calculateTimeLeft = () => {
-      const now = new Date().getTime();
-      const difference = targetDate - now;
+    const compute = () => {
+      const now = new Date();
+      const nowMins = now.getHours() * 60 + now.getMinutes();
 
-      if (difference > 0) {
-        setTimeLeft({
-          days: Math.floor(difference / (1000 * 60 * 60 * 24)),
-          hours: Math.floor((difference % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60)),
-          minutes: Math.floor((difference % (1000 * 60 * 60)) / (1000 * 60)),
-          seconds: Math.floor((difference % (1000 * 60)) / 1000)
-        });
-      } else {
-        setTimeLeft({ days: 0, hours: 0, minutes: 0, seconds: 0 });
+      // Use numeric [year, month, day] to avoid UTC vs local midnight mismatch
+      // new Date('2026-03-28') is UTC midnight, which != local midnight in EDT
+      const y = now.getFullYear(), mo = now.getMonth(), d = now.getDate();
+      const isFriday   = y === 2026 && mo === 2 && d === 27; // March is month index 2
+      const isSaturday = y === 2026 && mo === 2 && d === 28;
+      const isSunday   = y === 2026 && mo === 2 && d === 29;
+
+      let todaySchedule: ScheduleItem[] = [];
+      if (isFriday)        todaySchedule = fridaySchedule;
+      else if (isSaturday) todaySchedule = saturdaySchedule;
+      else if (isSunday)   todaySchedule = sundaySchedule;
+
+      // For items that cross midnight (AM items at top of Saturday/Sunday schedules),
+      // they're "late night" — treat them as being from previous day's perspective:
+      // We handle this by adjusting: if an item has end < start (crossed midnight), add 1440 to end.
+      // When nowMins is < 240 (before 4am), also check previous-night schedule.
+
+      let found: ScheduleItem | null = null;
+      let next: ScheduleItem | null = null;
+
+      const checkSchedule = (schedule: ScheduleItem[], midnightOffset = 0) => {
+        for (let i = 0; i < schedule.length; i++) {
+          const item = schedule[i];
+          let [start, end] = parseScheduleTime(item.time, now);
+          if (start === -1) continue;
+          start += midnightOffset;
+          end += midnightOffset;
+          // Handle midnight crossover within a range
+          if (end < start) end += 1440;
+
+          const adjustedNow = nowMins + midnightOffset;
+          if (adjustedNow >= start && adjustedNow < end) {
+            found = item;
+            // Look for next item
+            for (let j = i + 1; j < schedule.length; j++) {
+              const [ns] = parseScheduleTime(schedule[j].time, now);
+              if (ns !== -1) { next = schedule[j]; break; }
+            }
+            return true;
+          }
+        }
+        return false;
+      };
+
+      if (!checkSchedule(todaySchedule)) {
+        // Check if we're in early morning and previous night's schedule applies
+        if (nowMins < 240) {
+          let prevSchedule: ScheduleItem[] = [];
+          if (isSaturday) prevSchedule = fridaySchedule;
+          else if (isSunday) prevSchedule = saturdaySchedule;
+          checkSchedule(prevSchedule, -1440); // treat as yesterday's times
+        }
       }
+
+      setCurrentItem(found);
+      setNextItem(next);
     };
 
-    calculateTimeLeft();
-    const interval = setInterval(calculateTimeLeft, 1000);
-
+    compute();
+    const interval = setInterval(compute, 60_000);
     return () => clearInterval(interval);
-  }, []);
+  }, [fridaySchedule, saturdaySchedule, sundaySchedule]);
 
   if (!mounted) {
     return (
-      <section className="py-24 px-4 relative min-h-[20rem] flex items-center justify-center z-10">
-        <div className="flex justify-center items-center h-32">
-          <div className="w-8 h-8 rounded-full border-4 border-t-transparent animate-spin" style={{ borderColor: 'var(--racing-gold)', borderTopColor: 'transparent' }}></div>
+      <section className="py-6 sm:py-8 w-full relative flex items-center justify-center z-10 border-y border-[var(--border-gold)] overflow-hidden" style={{ background: 'var(--bg-secondary)' }}>
+        <div className="w-6 h-6 rounded-full border-2 border-t-transparent animate-spin" style={{ borderColor: 'var(--racing-gold)', borderTopColor: 'transparent' }}></div>
+      </section>
+    );
+  }
+
+  if (!currentItem) {
+    // Outside of event hours — show a neutral banner
+    return (
+      <section className="py-5 sm:py-6 w-full relative flex items-center justify-center z-10 border-y border-[var(--border-gold)] overflow-hidden shadow-[0_0_30px_rgba(212,168,83,0.1)]" style={{ background: 'var(--bg-secondary)' }}>
+        <div className="absolute inset-0" style={{
+          background: 'repeating-linear-gradient(-45deg, transparent, transparent 45px, rgba(212, 168, 83, 0.04) 45px, rgba(212, 168, 83, 0.04) 90px)',
+          pointerEvents: 'none'
+        }}></div>
+        <div className="relative z-10 text-center px-4">
+          <p className="font-racing text-lg sm:text-xl" style={{ color: 'var(--text-secondary)' }}>HACK INDY 2026 · MAR 27–29</p>
         </div>
       </section>
     );
   }
 
   return (
-    <section className="py-6 sm:py-8 w-full relative flex items-center justify-center z-10 border-y border-[var(--border-gold)] overflow-hidden shadow-[0_0_30px_rgba(212,168,83,0.1)]" style={{ background: 'var(--bg-secondary)' }}>
-      {/* Sideways Stripes Background */}
+    <section className="py-5 sm:py-7 w-full relative flex items-center justify-center z-10 border-y overflow-hidden" style={{ background: 'var(--bg-secondary)', borderColor: 'rgba(34,197,94,0.35)' }}>
+      {/* Green accent glow */}
+      <div className="absolute inset-0 pointer-events-none" style={{
+        background: 'radial-gradient(ellipse 70% 100% at 50% 50%, rgba(34,197,94,0.06) 0%, transparent 70%)'
+      }}></div>
+      {/* Stripes */}
       <div className="absolute inset-0" style={{
-        background: 'repeating-linear-gradient(-45deg, transparent, transparent 45px, rgba(212, 168, 83, 0.05) 45px, rgba(212, 168, 83, 0.05) 90px)',
+        background: 'repeating-linear-gradient(-45deg, transparent, transparent 45px, rgba(34,197,94,0.03) 45px, rgba(34,197,94,0.03) 90px)',
         pointerEvents: 'none'
       }}></div>
 
-      <div className="w-full max-w-6xl mx-auto flex flex-col md:flex-row items-center justify-between relative z-10 px-4 md:px-8 gap-4 md:gap-8">
-        <div className="text-center md:text-left animate-fade-in-up">
-          <h2 className="font-racing text-xl sm:text-2xl" style={{ color: 'var(--text-primary)' }}>
-            REGISTRATION CLOSED
-          </h2>
-          <p className="mt-1 sm:mt-2 text-xs sm:text-sm uppercase tracking-widest font-mono" style={{ color: 'var(--text-secondary)' }}>
-            Engines start in:
+      <div className="w-full max-w-6xl mx-auto relative z-10 px-4 md:px-8 py-1"
+        style={{ display: 'grid', gridTemplateColumns: '1fr auto 1fr', alignItems: 'center', gap: '1rem' }}>
+
+        {/* Left — live label */}
+        <div className="flex items-center gap-2.5">
+          <span className="relative flex h-2.5 w-2.5 shrink-0">
+            <span className="animate-ping absolute inline-flex h-full w-full rounded-full opacity-75" style={{ background: '#22c55e' }}></span>
+            <span className="relative inline-flex rounded-full h-2.5 w-2.5" style={{ background: '#22c55e' }}></span>
+          </span>
+          <span className="font-racing text-sm sm:text-base uppercase tracking-wider whitespace-nowrap" style={{ color: '#22c55e' }}>Going On Right Now</span>
+        </div>
+
+        {/* Center — current event (truly centered) */}
+        <div className="text-center">
+          <p className="font-racing text-lg sm:text-xl md:text-2xl leading-tight" style={{ color: 'var(--text-primary)' }}>
+            {currentItem.event}
+          </p>
+          <p className="text-[11px] font-mono uppercase tracking-widest mt-0.5" style={{ color: 'var(--text-muted)' }}>
+            {currentItem.time}
           </p>
         </div>
 
-        <div
-          className="flex items-center justify-center gap-2 sm:gap-4 font-racing text-3xl sm:text-4xl md:text-5xl lg:text-6xl text-center"
-          style={{ color: 'var(--racing-gold)' }}
-        >
-          <div className="flex flex-col items-center min-w-[3rem] sm:min-w-[4rem]">
-            <span suppressHydrationWarning>{timeLeft.days.toString().padStart(2, '0')}</span>
-            <span className="text-[10px] sm:text-xs font-body uppercase tracking-widest mt-1 opacity-70" style={{ color: 'var(--text-secondary)' }}>Days</span>
-          </div>
-
-          <span className="animate-pulse mb-3 sm:mb-4 opacity-50 text-[var(--racing-gold)]">:</span>
-
-          <div className="flex flex-col items-center min-w-[3rem] sm:min-w-[4rem]">
-            <span suppressHydrationWarning>{timeLeft.hours.toString().padStart(2, '0')}</span>
-            <span className="text-[10px] sm:text-xs font-body uppercase tracking-widest mt-1 opacity-70" style={{ color: 'var(--text-secondary)' }}>Hrs</span>
-          </div>
-
-          <span className="animate-pulse mb-3 sm:mb-4 opacity-50 text-[var(--racing-gold)]">:</span>
-
-          <div className="flex flex-col items-center min-w-[3rem] sm:min-w-[4rem]">
-            <span suppressHydrationWarning>{timeLeft.minutes.toString().padStart(2, '0')}</span>
-            <span className="text-[10px] sm:text-xs font-body uppercase tracking-widest mt-1 opacity-70" style={{ color: 'var(--text-secondary)' }}>Mins</span>
-          </div>
-
-          <span className="animate-pulse mb-3 sm:mb-4 opacity-50 text-[var(--racing-gold)]">:</span>
-
-          <div className="flex flex-col items-center min-w-[3rem] sm:min-w-[4rem]">
-            <span suppressHydrationWarning>{timeLeft.seconds.toString().padStart(2, '0')}</span>
-            <span className="text-[10px] sm:text-xs font-body uppercase tracking-widest mt-1 opacity-70" style={{ color: 'var(--text-secondary)' }}>Secs</span>
-          </div>
+        {/* Right — up next */}
+        <div className="text-right">
+          {nextItem && (
+            <>
+              <p className="text-[10px] uppercase tracking-widest font-mono mb-0.5" style={{ color: 'var(--text-muted)' }}>Up Next</p>
+              <p className="text-sm font-racing leading-tight" style={{ color: 'var(--racing-gold)' }}>{nextItem.event}</p>
+              <p className="text-[10px] font-mono" style={{ color: 'var(--text-muted)' }}>{nextItem.time}</p>
+            </>
+          )}
         </div>
       </div>
     </section>
@@ -111,6 +215,7 @@ export default function Home() {
   const [activeScheduleDay, setActiveScheduleDay] = useState<'friday' | 'saturday' | 'sunday'>('friday');
   const [prizesRevealed, setPrizesRevealed] = useState(false);
   const [prizeCountdown, setPrizeCountdown] = useState({ hours: 0, minutes: 0, seconds: 0 });
+  const [hackCountdown, setHackCountdown] = useState({ hours: 0, minutes: 0, seconds: 0, expired: false });
   const scheduleRef = useRef<HTMLDivElement>(null);
 
   // Racing lights animation on load
@@ -136,6 +241,25 @@ export default function Home() {
         const m = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
         const s = Math.floor((diff % (1000 * 60)) / 1000);
         setPrizeCountdown({ hours: h, minutes: m, seconds: s });
+      }
+    };
+    tick();
+    const interval = setInterval(tick, 1000);
+    return () => clearInterval(interval);
+  }, []);
+
+  // Hacking countdown — submissions due Sunday 3/29 at 4:00 PM EDT
+  useEffect(() => {
+    const deadline = new Date('2026-03-29T16:00:00-04:00').getTime();
+    const tick = () => {
+      const diff = deadline - Date.now();
+      if (diff <= 0) {
+        setHackCountdown({ hours: 0, minutes: 0, seconds: 0, expired: true });
+      } else {
+        const h = Math.floor(diff / (1000 * 60 * 60));
+        const m = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+        const s = Math.floor((diff % (1000 * 60)) / 1000);
+        setHackCountdown({ hours: h, minutes: m, seconds: s, expired: false });
       }
     };
     tick();
@@ -476,12 +600,22 @@ export default function Home() {
             <div className={`racing-light ${lightsComplete ? 'racing-light-3' : ''}`}></div>
           </div>
 
-          {/* Registration Badge */}
+          {/* Hacking Countdown Badge */}
           <div className="flex justify-center mb-8 animate-fade-in-up delay-100">
-            <span className="racing-badge registration-badge">
-              <span className="w-2 h-2 rounded-full bg-red-500"></span>
-              Registration Closed
-            </span>
+            {hackCountdown.expired ? (
+              <span className="racing-badge registration-badge">
+                <span className="w-2 h-2 rounded-full bg-red-500"></span>
+                Submissions Closed
+              </span>
+            ) : (
+              <span className="racing-badge" style={{ borderColor: 'var(--racing-gold)', color: 'var(--racing-gold)' }}>
+                <span className="w-2 h-2 rounded-full animate-pulse" style={{ background: 'var(--racing-gold)' }}></span>
+                <span className="font-mono" suppressHydrationWarning>
+                  {String(hackCountdown.hours).padStart(2, '0')}:{String(hackCountdown.minutes).padStart(2, '0')}:{String(hackCountdown.seconds).padStart(2, '0')}
+                </span>
+                <span className="text-xs uppercase tracking-widest opacity-80">hacking remaining</span>
+              </span>
+            )}
           </div>
 
           {/* Main Title */}
@@ -508,13 +642,6 @@ export default function Home() {
 
           {/* CTA Buttons */}
           <div className="flex flex-col gap-3 sm:gap-4 justify-center items-center animate-fade-in-up delay-500 px-4">
-            <button
-              disabled
-              className="racing-btn text-sm sm:text-lg px-6 sm:px-10 py-3 sm:py-4 flex items-center justify-center gap-2 sm:gap-3 w-full max-w-xs sm:w-72 opacity-50 cursor-not-allowed"
-            >
-              <Icons.Flag className="w-4 h-4 sm:w-5 sm:h-5" />
-              Registration Closed
-            </button>
             <a
               href="https://hack-indy-2026.devpost.com/"
               target="_blank"
@@ -539,8 +666,12 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Countdown Section */}
-      <CountdownClock />
+      {/* Live Now Banner */}
+      <LiveNowBanner
+        fridaySchedule={fridaySchedule}
+        saturdaySchedule={saturdaySchedule}
+        sundaySchedule={sundaySchedule}
+      />
 
       {/* About Section */}
       <section id="about" className="py-24 px-4 relative">
