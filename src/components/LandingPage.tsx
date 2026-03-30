@@ -10,213 +10,11 @@ const FaultyTerminal = dynamic(() => import('@/components/FaultyTerminal'), {
   ssr: false,
 });
 
-// Parse a schedule time string like "2:30 - 3:30 PM" or "4:00 PM" into minutes-from-midnight
-// relative to a given date. Returns [startMins, endMins].
-function parseScheduleTime(timeStr: string, baseDate: Date): [number, number] {
-  // Normalize: strip leading/trailing whitespace
-  const str = timeStr.trim();
-
-  // Match patterns like "4:00 PM" or "4:00 - 6:00 PM" or "12:00 - 1:00 AM"
-  const rangeMatch = str.match(/^(\d{1,2}:\d{2})\s*-\s*(\d{1,2}:\d{2})\s*(AM|PM)$/i);
-  const singleMatch = str.match(/^(\d{1,2}:\d{2})\s*(AM|PM)$/i);
-
-  const toMins = (hhmm: string, meridiem: string): number => {
-    const [h, m] = hhmm.split(':').map(Number);
-    let hour = h % 12;
-    if (meridiem.toUpperCase() === 'PM') hour += 12;
-    return hour * 60 + m;
-  };
-
-  // Helper: guess meridiem for start when only end meridiem is given.
-  // In 12-hour clock, 12 is the "wrap-around" hour (12 AM = midnight, 12 PM = noon).
-  // Normalize both hours with % 12 so that 12 → 0 before comparing.
-  const guessMeridiem = (startHhmm: string, endHhmm: string, endMeridiem: string): string => {
-    const sh = parseInt(startHhmm) % 12; // 12 → 0, 1–11 unchanged
-    const eh = parseInt(endHhmm)   % 12;
-    // If adjusted start > adjusted end, a meridiem boundary is crossed
-    if (sh > eh) {
-      return endMeridiem.toUpperCase() === 'PM' ? 'AM' : 'PM';
-    }
-    return endMeridiem;
-  };
-
-  if (rangeMatch) {
-    const [, startHhmm, endHhmm, endMeridiem] = rangeMatch;
-    const startMeridiem = guessMeridiem(startHhmm, endHhmm, endMeridiem);
-    return [toMins(startHhmm, startMeridiem), toMins(endHhmm, endMeridiem)];
-  }
-
-  if (singleMatch) {
-    const [, hhmm, meridiem] = singleMatch;
-    const mins = toMins(hhmm, meridiem);
-    return [mins, mins + 30]; // treat single-time events as 30-min window
-  }
-
-  return [-1, -1]; // unparseable
-}
-
-type ScheduleItem = { time: string; event: string; location: React.ReactNode };
-
-function LiveNowBanner({ fridaySchedule, saturdaySchedule, sundaySchedule }: {
-  fridaySchedule: ScheduleItem[];
-  saturdaySchedule: ScheduleItem[];
-  sundaySchedule: ScheduleItem[];
-}) {
-  const [mounted, setMounted] = useState(false);
-  const [currentItem, setCurrentItem] = useState<ScheduleItem | null>(null);
-  const [nextItem, setNextItem] = useState<ScheduleItem | null>(null);
-
-  useEffect(() => {
-    setMounted(true);
-
-    const compute = () => {
-      const now = new Date();
-      const nowMins = now.getHours() * 60 + now.getMinutes();
-
-      // Use numeric [year, month, day] to avoid UTC vs local midnight mismatch
-      // new Date('2026-03-28') is UTC midnight, which != local midnight in EDT
-      const y = now.getFullYear(), mo = now.getMonth(), d = now.getDate();
-      const isFriday   = y === 2026 && mo === 2 && d === 27; // March is month index 2
-      const isSaturday = y === 2026 && mo === 2 && d === 28;
-      const isSunday   = y === 2026 && mo === 2 && d === 29;
-
-      let todaySchedule: ScheduleItem[] = [];
-      if (isFriday)        todaySchedule = fridaySchedule;
-      else if (isSaturday) todaySchedule = saturdaySchedule;
-      else if (isSunday)   todaySchedule = sundaySchedule;
-
-      // For items that cross midnight (AM items at top of Saturday/Sunday schedules),
-      // they're "late night" — treat them as being from previous day's perspective:
-      // We handle this by adjusting: if an item has end < start (crossed midnight), add 1440 to end.
-      // When nowMins is < 240 (before 4am), also check previous-night schedule.
-
-      let found: ScheduleItem | null = null;
-      let next: ScheduleItem | null = null;
-
-      const checkSchedule = (schedule: ScheduleItem[], midnightOffset = 0) => {
-        for (let i = 0; i < schedule.length; i++) {
-          const item = schedule[i];
-          let [start, end] = parseScheduleTime(item.time, now);
-          if (start === -1) continue;
-          start += midnightOffset;
-          end += midnightOffset;
-          // Handle midnight crossover within a range
-          if (end < start) end += 1440;
-
-          const adjustedNow = nowMins + midnightOffset;
-          if (adjustedNow >= start && adjustedNow < end) {
-            found = item;
-            // Look for next item
-            for (let j = i + 1; j < schedule.length; j++) {
-              const [ns] = parseScheduleTime(schedule[j].time, now);
-              if (ns !== -1) { next = schedule[j]; break; }
-            }
-            return true;
-          }
-        }
-        return false;
-      };
-
-      if (!checkSchedule(todaySchedule)) {
-        // Check if we're in early morning and previous night's schedule applies
-        if (nowMins < 240) {
-          let prevSchedule: ScheduleItem[] = [];
-          if (isSaturday) prevSchedule = fridaySchedule;
-          else if (isSunday) prevSchedule = saturdaySchedule;
-          checkSchedule(prevSchedule, -1440); // treat as yesterday's times
-        }
-      }
-
-      setCurrentItem(found);
-      setNextItem(next);
-    };
-
-    compute();
-    const interval = setInterval(compute, 60_000);
-    return () => clearInterval(interval);
-  }, [fridaySchedule, saturdaySchedule, sundaySchedule]);
-
-  if (!mounted) {
-    return (
-      <section className="py-6 sm:py-8 w-full relative flex items-center justify-center z-10 border-y border-[var(--border-gold)] overflow-hidden" style={{ background: 'var(--bg-secondary)' }}>
-        <div className="w-6 h-6 rounded-full border-2 border-t-transparent animate-spin" style={{ borderColor: 'var(--racing-gold)', borderTopColor: 'transparent' }}></div>
-      </section>
-    );
-  }
-
-  if (!currentItem) {
-    // Outside of event hours — show a neutral banner
-    return (
-      <section className="py-5 sm:py-6 w-full relative flex items-center justify-center z-10 border-y border-[var(--border-gold)] overflow-hidden shadow-[0_0_30px_rgba(212,168,83,0.1)]" style={{ background: 'var(--bg-secondary)' }}>
-        <div className="absolute inset-0" style={{
-          background: 'repeating-linear-gradient(-45deg, transparent, transparent 45px, rgba(212, 168, 83, 0.04) 45px, rgba(212, 168, 83, 0.04) 90px)',
-          pointerEvents: 'none'
-        }}></div>
-        <div className="relative z-10 text-center px-4">
-          <p className="font-racing text-lg sm:text-xl" style={{ color: 'var(--text-secondary)' }}>HACK INDY 2026 · MAR 27–29</p>
-        </div>
-      </section>
-    );
-  }
-
-  return (
-    <section className="py-5 sm:py-7 w-full relative flex items-center justify-center z-10 border-y overflow-hidden" style={{ background: 'var(--bg-secondary)', borderColor: 'rgba(34,197,94,0.35)' }}>
-      {/* Green accent glow */}
-      <div className="absolute inset-0 pointer-events-none" style={{
-        background: 'radial-gradient(ellipse 70% 100% at 50% 50%, rgba(34,197,94,0.06) 0%, transparent 70%)'
-      }}></div>
-      {/* Stripes */}
-      <div className="absolute inset-0" style={{
-        background: 'repeating-linear-gradient(-45deg, transparent, transparent 45px, rgba(34,197,94,0.03) 45px, rgba(34,197,94,0.03) 90px)',
-        pointerEvents: 'none'
-      }}></div>
-
-      <div className="w-full max-w-6xl mx-auto relative z-10 px-4 md:px-8 py-1"
-        style={{ display: 'grid', gridTemplateColumns: '1fr auto 1fr', alignItems: 'center', gap: '1rem' }}>
-
-        {/* Left — live label */}
-        <div className="flex items-center gap-2.5">
-          <span className="relative flex h-2.5 w-2.5 shrink-0">
-            <span className="animate-ping absolute inline-flex h-full w-full rounded-full opacity-75" style={{ background: '#22c55e' }}></span>
-            <span className="relative inline-flex rounded-full h-2.5 w-2.5" style={{ background: '#22c55e' }}></span>
-          </span>
-          <span className="font-racing text-sm sm:text-base uppercase tracking-wider whitespace-nowrap" style={{ color: '#22c55e' }}>Going On Right Now</span>
-        </div>
-
-        {/* Center — current event (truly centered) */}
-        <div className="text-center">
-          <p className="font-racing text-lg sm:text-xl md:text-2xl leading-tight" style={{ color: 'var(--text-primary)' }}>
-            {currentItem.event}
-          </p>
-          <p className="text-[11px] font-mono uppercase tracking-widest mt-0.5" style={{ color: 'var(--text-muted)' }}>
-            {currentItem.time}
-          </p>
-        </div>
-
-        {/* Right — up next */}
-        <div className="text-right">
-          {nextItem && (
-            <>
-              <p className="text-[10px] uppercase tracking-widest font-mono mb-0.5" style={{ color: 'var(--text-muted)' }}>Up Next</p>
-              <p className="text-sm font-racing leading-tight" style={{ color: 'var(--racing-gold)' }}>{nextItem.event}</p>
-              <p className="text-[10px] font-mono" style={{ color: 'var(--text-muted)' }}>{nextItem.time}</p>
-            </>
-          )}
-        </div>
-      </div>
-    </section>
-  );
-}
-
 export default function Home() {
-  const [openFAQ, setOpenFAQ] = useState<number | null>(null);
   const [lightsComplete, setLightsComplete] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [activeScheduleDay, setActiveScheduleDay] = useState<'friday' | 'saturday' | 'sunday'>('friday');
   const [prizesRevealed, setPrizesRevealed] = useState(false);
   const [prizeCountdown, setPrizeCountdown] = useState({ hours: 0, minutes: 0, seconds: 0 });
-  const [hackCountdown, setHackCountdown] = useState({ hours: 0, minutes: 0, seconds: 0, expired: false });
-  const scheduleRef = useRef<HTMLDivElement>(null);
 
   // Racing lights animation on load
   useEffect(() => {
@@ -229,12 +27,14 @@ export default function Home() {
   // Prize reveal timer — reveals at 6 PM EDT on March 27, 2026
   useEffect(() => {
     const revealTime = new Date('2026-03-27T18:00:00-04:00').getTime();
+    let interval: NodeJS.Timeout | undefined;
     const tick = () => {
       const now = Date.now();
       const diff = revealTime - now;
       if (diff <= 0) {
         setPrizesRevealed(true);
         setPrizeCountdown({ hours: 0, minutes: 0, seconds: 0 });
+        if (interval) clearInterval(interval);
       } else {
         setPrizesRevealed(false);
         const h = Math.floor(diff / (1000 * 60 * 60));
@@ -244,28 +44,13 @@ export default function Home() {
       }
     };
     tick();
-    const interval = setInterval(tick, 1000);
-    return () => clearInterval(interval);
+    if (revealTime - Date.now() > 0) {
+      interval = setInterval(tick, 1000);
+    }
+    return () => { if (interval) clearInterval(interval); };
   }, []);
 
-  // Hacking countdown — submissions due Sunday 3/29 at 4:00 PM EDT
-  useEffect(() => {
-    const deadline = new Date('2026-03-29T16:00:00-04:00').getTime();
-    const tick = () => {
-      const diff = deadline - Date.now();
-      if (diff <= 0) {
-        setHackCountdown({ hours: 0, minutes: 0, seconds: 0, expired: true });
-      } else {
-        const h = Math.floor(diff / (1000 * 60 * 60));
-        const m = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
-        const s = Math.floor((diff % (1000 * 60)) / 1000);
-        setHackCountdown({ hours: h, minutes: m, seconds: s, expired: false });
-      }
-    };
-    tick();
-    const interval = setInterval(tick, 1000);
-    return () => clearInterval(interval);
-  }, []);
+
 
   // Scroll animation observer
   useEffect(() => {
@@ -287,43 +72,7 @@ export default function Home() {
     return () => observer.disconnect();
   }, []);
 
-  const toggleFAQ = (index: number) => {
-    setOpenFAQ(openFAQ === index ? null : index);
-  };
 
-  // Scroll schedule left/right
-  const scrollSchedule = (direction: 'left' | 'right') => {
-    if (scheduleRef.current) {
-      const scrollAmount = 400;
-      scheduleRef.current.scrollBy({
-        left: direction === 'left' ? -scrollAmount : scrollAmount,
-        behavior: 'smooth'
-      });
-    }
-  };
-
-  const faqs = [
-    {
-      question: "What is a Hackathon?",
-      answer: "Hack Indy is a three-day overnight event where you can learn, build, and showcase an exciting technology-based project! Beyond working on your project, you'll enjoy free food, swag, and the chance to win awesome prizes. We also host industry-driven workshops, engineering panels, and fun activities like video game tournaments to keep the energy high. Most importantly, Hack Indy is a welcoming space to network with top executives in the Indianapolis tech scene and connect with like-minded students from all majors and experience levels."
-    },
-    {
-      question: "Who can attend and how much experience do I need to participate?",
-      answer: "Any undergraduate university student age 18 or older from any school or major can attend Hack Indy! No experience or technical background is required to participate, and we have mentors on site to assist with any technical needs. We also have unique and enriching experiences available to more skilled hackers, with special technologies and tech talks offered."
-    },
-    {
-      question: "Do I have to apply to participate in Hack Indy?",
-      answer: "You do not need to apply to participate in Hack Indy, we are open to all students of all majors. Just fill out our Interest form, so we can keep track of participants."
-    },
-    {
-      question: "What projects can I make at Hack Indy?",
-      answer: "You can build any project you want at Hack Indy! We have no strict project requirements, other than that it was built at the hackathon itself. Every year, we see a wide variety of technologies used and various applications for projects, and even see hardware-based projects — the possibilities are endless!"
-    },
-    {
-      question: "Does Hack Indy offer travel reimbursements?",
-      answer: "Hack Indy will not offer travel reimbursements at this time to those attending from other universities. We do provide all meals while you are at the hackathon. The Hack Indy hackathon venue will be open during the entire duration of the hackathon, and there are many nearby locations which can offer housing over the course of the two nights."
-    }
-  ];
 
   const sponsors = [
     { logo: 'purdue cs logo transparent.png', name: 'Purdue CS', link: 'https://cs.purdue.edu' },
@@ -349,51 +98,7 @@ export default function Home() {
     { logo: 'Featherless Hackathon Assets.png', name: 'Featherless AI', link: 'https://featherless.ai' },
   ];
 
-  const fridaySchedule: any[] = [
-    { time: '4:30 - 5:00 PM', event: 'Officers Setup', location: <><a href="https://maps.google.com/?q=325+University+Blvd,+Indianapolis,+IN+46202" target="_blank" rel="noopener noreferrer" className="underline hover:text-[var(--racing-gold)]">Lecture Hall Room 100</a><span className="text-xs ml-1 opacity-60">(325 University Blvd, Indianapolis, IN 46202)</span></> },
-    { time: '5:00 - 6:00 PM', event: 'Check In & Swag Distribution', location: <><a href="https://maps.google.com/?q=325+University+Blvd,+Indianapolis,+IN+46202" target="_blank" rel="noopener noreferrer" className="underline hover:text-[var(--racing-gold)]">Lecture Hall Room 100</a><span className="text-xs ml-1 opacity-60">(325 University Blvd, Indianapolis, IN 46202)</span></> },
-    { time: '6:00 - 6:30 PM', event: 'Co-President Om Janamanchi', location: <><a href="https://maps.google.com/?q=325+University+Blvd,+Indianapolis,+IN+46202" target="_blank" rel="noopener noreferrer" className="underline hover:text-[var(--racing-gold)]">Lecture Hall Room 100</a><span className="text-xs ml-1 opacity-60">(325 University Blvd, Indianapolis, IN 46202)</span></> },
-    { time: '6:30 - 6:40 PM', event: 'Computer Science Department Head, Dr. Petros Drineas', location: <><a href="https://maps.google.com/?q=325+University+Blvd,+Indianapolis,+IN+46202" target="_blank" rel="noopener noreferrer" className="underline hover:text-[var(--racing-gold)]">Lecture Hall Room 100</a><span className="text-xs ml-1 opacity-60">(325 University Blvd, Indianapolis, IN 46202)</span></> },
-    { time: '6:40 - 6:50 PM', event: 'Senior Vice Provost Purdue University in Indianapolis, David Umulis', location: <><a href="https://maps.google.com/?q=325+University+Blvd,+Indianapolis,+IN+46202" target="_blank" rel="noopener noreferrer" className="underline hover:text-[var(--racing-gold)]">Lecture Hall Room 100</a><span className="text-xs ml-1 opacity-60">(325 University Blvd, Indianapolis, IN 46202)</span></> },
-    { time: '6:50 - 7:30 PM', event: 'Opening Ceremony - Hackathon Instructions', location: <><a href="https://maps.google.com/?q=325+University+Blvd,+Indianapolis,+IN+46202" target="_blank" rel="noopener noreferrer" className="underline hover:text-[var(--racing-gold)]">Lecture Hall Room 100</a><span className="text-xs ml-1 opacity-60">(325 University Blvd, Indianapolis, IN 46202)</span></> },
-    { time: '7:30 - 8:00 PM', event: 'MLH Workshop - Hacking with GitHub Copilot', location: <><a href="https://maps.google.com/?q=325+University+Blvd,+Indianapolis,+IN+46202" target="_blank" rel="noopener noreferrer" className="underline hover:text-[var(--racing-gold)]">Lecture Hall Room 100</a><span className="text-xs ml-1 opacity-60">(325 University Blvd, Indianapolis, IN 46202)</span></> },
-    { time: '8:00 - 8:30 PM', event: 'Dinner', location: <><a href="https://maps.google.com/?q=325+University+Blvd,+Indianapolis,+IN+46202" target="_blank" rel="noopener noreferrer" className="underline hover:text-[var(--racing-gold)]">Lecture Hall Room 100</a><span className="text-xs ml-1 opacity-60">(325 University Blvd, Indianapolis, IN 46202)</span></> },
-    { time: '8:30 - 11:59 PM', event: 'Overnight Hacking Begins', location: <><a href="https://maps.google.com/?q=520+Indiana+Ave,+Indianapolis,+IN+46202" target="_blank" rel="noopener noreferrer" className="underline hover:text-[var(--racing-gold)]">Purdue Student Center</a><span className="text-xs ml-1 opacity-60">Rooms 102-110, 124-128 (520 Indiana Ave, Indianapolis, IN 46202)</span></> },
-  ];
 
-  const saturdaySchedule = [
-    { time: '12:00 - 1:00 AM', event: 'Midnight Snacks', location: <><a href="https://maps.google.com/?q=520+Indiana+Ave,+Indianapolis,+IN+46202" target="_blank" rel="noopener noreferrer" className="underline hover:text-[var(--racing-gold)]">Purdue Student Center</a><span className="text-xs ml-1 opacity-60">(520 Indiana Ave, Indianapolis, IN 46202)</span></> },
-    { time: '1:00 - 7:30 AM', event: 'Overnight Hacking Continues', location: <><a href="https://maps.google.com/?q=520+Indiana+Ave,+Indianapolis,+IN+46202" target="_blank" rel="noopener noreferrer" className="underline hover:text-[var(--racing-gold)]">Purdue Student Center</a><span className="text-xs ml-1 opacity-60">(520 Indiana Ave, Indianapolis, IN 46202)</span></> },
-    { time: '7:30 - 8:30 AM', event: 'Breakfast', location: <><a href="https://maps.google.com/?q=520+Indiana+Ave,+Indianapolis,+IN+46202" target="_blank" rel="noopener noreferrer" className="underline hover:text-[var(--racing-gold)]">Purdue Student Center</a><span className="text-xs ml-1 opacity-60">(520 Indiana Ave, Indianapolis, IN 46202)</span></> },
-    { time: '8:30 - 9:00 AM', event: 'Hacking Continues', location: <><a href="https://maps.google.com/?q=520+Indiana+Ave,+Indianapolis,+IN+46202" target="_blank" rel="noopener noreferrer" className="underline hover:text-[var(--racing-gold)]">Purdue Student Center</a><span className="text-xs ml-1 opacity-60">(520 Indiana Ave, Indianapolis, IN 46202)</span></> },
-    { time: '9:00 - 10:00 AM', event: 'Workshop 1 — Austin Ottinger ANU Workshop', location: <><a href="https://maps.google.com/?q=520+Indiana+Ave,+Indianapolis,+IN+46202" target="_blank" rel="noopener noreferrer" className="underline hover:text-[var(--racing-gold)]">Purdue Student Center</a><span className="text-xs ml-1 opacity-60">Room 102 (520 Indiana Ave, Indianapolis, IN 46202)</span></> },
-    { time: '10:00 - 11:00 AM', event: 'Hacking Continues', location: <><a href="https://maps.google.com/?q=520+Indiana+Ave,+Indianapolis,+IN+46202" target="_blank" rel="noopener noreferrer" className="underline hover:text-[var(--racing-gold)]">Purdue Student Center</a><span className="text-xs ml-1 opacity-60">(520 Indiana Ave, Indianapolis, IN 46202)</span></> },
-    { time: '11:00 - 12:00 PM', event: 'Workshop 2 — Amiya Maji RCAC Workshop', location: <><a href="https://maps.google.com/?q=520+Indiana+Ave,+Indianapolis,+IN+46202" target="_blank" rel="noopener noreferrer" className="underline hover:text-[var(--racing-gold)]">Purdue Student Center</a><span className="text-xs ml-1 opacity-60">Room 102 (520 Indiana Ave, Indianapolis, IN 46202)</span></> },
-    { time: '12:00 - 2:00 PM', event: 'Lunch', location: <><a href="https://maps.google.com/?q=520+Indiana+Ave,+Indianapolis,+IN+46202" target="_blank" rel="noopener noreferrer" className="underline hover:text-[var(--racing-gold)]">Purdue Student Center</a><span className="text-xs ml-1 opacity-60">(520 Indiana Ave, Indianapolis, IN 46202)</span></> },
-    { time: '2:00 - 2:30 PM', event: 'Hacking Continues', location: <><a href="https://maps.google.com/?q=520+Indiana+Ave,+Indianapolis,+IN+46202" target="_blank" rel="noopener noreferrer" className="underline hover:text-[var(--racing-gold)]">Purdue Student Center</a><span className="text-xs ml-1 opacity-60">(520 Indiana Ave, Indianapolis, IN 46202)</span></> },
-    { time: '2:30 - 3:30 PM', event: 'Workshop 3 — Katie Hughes Privacy Law & Data Ethics', location: <><a href="https://maps.google.com/?q=520+Indiana+Ave,+Indianapolis,+IN+46202" target="_blank" rel="noopener noreferrer" className="underline hover:text-[var(--racing-gold)]">Purdue Student Center</a><span className="text-xs ml-1 opacity-60">Room 102 (520 Indiana Ave, Indianapolis, IN 46202)</span></> },
-    { time: '3:30 - 5:00 PM', event: 'Hacking Continues', location: <><a href="https://maps.google.com/?q=520+Indiana+Ave,+Indianapolis,+IN+46202" target="_blank" rel="noopener noreferrer" className="underline hover:text-[var(--racing-gold)]">Purdue Student Center</a><span className="text-xs ml-1 opacity-60">(520 Indiana Ave, Indianapolis, IN 46202)</span></> },
-    { time: '5:00 - 7:00 PM', event: 'Tech Engineering Panel, Moderator Quinton Pedrick', location: <><a href="https://maps.google.com/?q=520+Indiana+Ave,+Indianapolis,+IN+46202" target="_blank" rel="noopener noreferrer" className="underline hover:text-[var(--racing-gold)]">Purdue Student Center</a><span className="text-xs ml-1 opacity-60">Room 102 (520 Indiana Ave, Indianapolis, IN 46202)</span></> },
-    { time: '7:00 - 8:00 PM', event: 'Dinner', location: <><a href="https://maps.google.com/?q=520+Indiana+Ave,+Indianapolis,+IN+46202" target="_blank" rel="noopener noreferrer" className="underline hover:text-[var(--racing-gold)]">Purdue Student Center</a><span className="text-xs ml-1 opacity-60">(520 Indiana Ave, Indianapolis, IN 46202)</span></> },
-    { time: '8:00 - 11:59 PM', event: 'Overnight Hacking Continues', location: <><a href="https://maps.google.com/?q=520+Indiana+Ave,+Indianapolis,+IN+46202" target="_blank" rel="noopener noreferrer" className="underline hover:text-[var(--racing-gold)]">Purdue Student Center</a><span className="text-xs ml-1 opacity-60">(520 Indiana Ave, Indianapolis, IN 46202)</span></> },
-  ];
-
-  const sundaySchedule = [
-    { time: '12:00 - 1:00 AM', event: 'Midnight Snacks', location: <><a href="https://maps.google.com/?q=520+Indiana+Ave,+Indianapolis,+IN+46202" target="_blank" rel="noopener noreferrer" className="underline hover:text-[var(--racing-gold)]">Purdue Student Center</a><span className="text-xs ml-1 opacity-60">(520 Indiana Ave, Indianapolis, IN 46202)</span></> },
-    { time: '1:00 - 7:30 AM', event: 'Overnight Hacking Continues', location: <><a href="https://maps.google.com/?q=520+Indiana+Ave,+Indianapolis,+IN+46202" target="_blank" rel="noopener noreferrer" className="underline hover:text-[var(--racing-gold)]">Purdue Student Center</a><span className="text-xs ml-1 opacity-60">(520 Indiana Ave, Indianapolis, IN 46202)</span></> },
-    { time: '7:30 - 8:30 AM', event: 'Breakfast', location: <><a href="https://maps.google.com/?q=520+Indiana+Ave,+Indianapolis,+IN+46202" target="_blank" rel="noopener noreferrer" className="underline hover:text-[var(--racing-gold)]">Purdue Student Center</a><span className="text-xs ml-1 opacity-60">(520 Indiana Ave, Indianapolis, IN 46202)</span></> },
-    { time: '8:30 - 9:00 AM', event: 'Hacking Continues', location: <><a href="https://maps.google.com/?q=520+Indiana+Ave,+Indianapolis,+IN+46202" target="_blank" rel="noopener noreferrer" className="underline hover:text-[var(--racing-gold)]">Purdue Student Center</a><span className="text-xs ml-1 opacity-60">(520 Indiana Ave, Indianapolis, IN 46202)</span></> },
-    { time: '9:00 - 10:00 AM', event: 'Workshop 4 — Ruthu Shankar Website Development', location: <><a href="https://maps.google.com/?q=520+Indiana+Ave,+Indianapolis,+IN+46202" target="_blank" rel="noopener noreferrer" className="underline hover:text-[var(--racing-gold)]">Purdue Student Center</a><span className="text-xs ml-1 opacity-60">Room 102 (520 Indiana Ave, Indianapolis, IN 46202)</span></> },
-    { time: '10:00 - 11:00 AM', event: 'Hacking Continues', location: <><a href="https://maps.google.com/?q=520+Indiana+Ave,+Indianapolis,+IN+46202" target="_blank" rel="noopener noreferrer" className="underline hover:text-[var(--racing-gold)]">Purdue Student Center</a><span className="text-xs ml-1 opacity-60">(520 Indiana Ave, Indianapolis, IN 46202)</span></> },
-    { time: '11:00 - 12:00 PM', event: 'Workshop 5 — Ben Cochran Claude AI Agents', location: <><a href="https://maps.google.com/?q=520+Indiana+Ave,+Indianapolis,+IN+46202" target="_blank" rel="noopener noreferrer" className="underline hover:text-[var(--racing-gold)]">Purdue Student Center</a><span className="text-xs ml-1 opacity-60">Room 102 (520 Indiana Ave, Indianapolis, IN 46202)</span></> },
-    { time: '12:00 - 2:00 PM', event: 'Lunch', location: <><a href="https://maps.google.com/?q=520+Indiana+Ave,+Indianapolis,+IN+46202" target="_blank" rel="noopener noreferrer" className="underline hover:text-[var(--racing-gold)]">Purdue Student Center</a><span className="text-xs ml-1 opacity-60">(520 Indiana Ave, Indianapolis, IN 46202)</span></> },
-    { time: '2:00 - 4:00 PM', event: 'Hacking Continues', location: <><a href="https://maps.google.com/?q=520+Indiana+Ave,+Indianapolis,+IN+46202" target="_blank" rel="noopener noreferrer" className="underline hover:text-[var(--racing-gold)]">Purdue Student Center</a><span className="text-xs ml-1 opacity-60">(520 Indiana Ave, Indianapolis, IN 46202)</span></> },
-    { time: '4:00 PM', event: 'Project Submissions Due', location: 'Devpost Website' },
-    { time: '4:00 - 6:00 PM', event: 'Judging Submission', location: <><a href="https://maps.google.com/?q=402+N+Blackford+St,+Indianapolis,+IN+46202" target="_blank" rel="noopener noreferrer" className="underline hover:text-[var(--racing-gold)]">LD Room 010</a><span className="text-xs ml-1 opacity-60">(402 N. Blackford St, Indianapolis, IN 46202)</span></> },
-    { time: '6:00 - 7:00 PM', event: 'Dinner', location: <><a href="https://maps.google.com/?q=402+N+Blackford+St,+Indianapolis,+IN+46202" target="_blank" rel="noopener noreferrer" className="underline hover:text-[var(--racing-gold)]">LD Room 010</a><span className="text-xs ml-1 opacity-60">(402 N. Blackford St, Indianapolis, IN 46202)</span></> },
-    { time: '7:00 - 7:30 PM', event: 'Final Judging Decisions', location: <><a href="https://maps.google.com/?q=402+N+Blackford+St,+Indianapolis,+IN+46202" target="_blank" rel="noopener noreferrer" className="underline hover:text-[var(--racing-gold)]">LD Room 010</a><span className="text-xs ml-1 opacity-60">(402 N. Blackford St, Indianapolis, IN 46202)</span></> },
-    { time: '7:30 - 8:30 PM', event: 'Closing Ceremony by Co-President Om Janamanchi', location: <><a href="https://maps.google.com/?q=402+N+Blackford+St,+Indianapolis,+IN+46202" target="_blank" rel="noopener noreferrer" className="underline hover:text-[var(--racing-gold)]">LD Room 010</a><span className="text-xs ml-1 opacity-60">(402 N. Blackford St, Indianapolis, IN 46202)</span></> },
-  ];
 
   return (
     <div className="min-h-screen relative" style={{ background: 'var(--bg-primary)' }}>
@@ -483,11 +188,8 @@ export default function Home() {
             <div className="hidden md:flex items-center gap-8">
               {[
                 { href: '#about', label: 'About', Icon: Icons.Flag },
-                { href: '#schedule', label: 'Schedule', Icon: Icons.Clock },
-                { href: '#prizes', label: 'Prizes', Icon: Icons.Trophy },
-                { href: '#faq', label: 'FAQ', Icon: Icons.Question },
                 { href: '#sponsors', label: 'Sponsors', Icon: Icons.Wrench },
-                { href: '#judges', label: 'Judges', Icon: Icons.Medal },
+                { href: '/2026', label: '2026 Archive', Icon: Icons.Clock },
               ].map((link) => (
                 <a
                   key={link.href}
@@ -530,11 +232,8 @@ export default function Home() {
           <div className="mobile-menu-content">
             {[
               { href: '#about', label: 'About', Icon: Icons.Flag },
-              { href: '#schedule', label: 'Schedule', Icon: Icons.Clock },
-              { href: '#prizes', label: 'Prizes', Icon: Icons.Trophy },
-              { href: '#faq', label: 'FAQ', Icon: Icons.Question },
               { href: '#sponsors', label: 'Sponsors', Icon: Icons.Wrench },
-              { href: '#judges', label: 'Judges', Icon: Icons.Medal },
+              { href: '/2026', label: '2026 Archive', Icon: Icons.Clock },
             ].map((link) => (
               <a
                 key={link.href}
@@ -600,22 +299,12 @@ export default function Home() {
             <div className={`racing-light ${lightsComplete ? 'racing-light-3' : ''}`}></div>
           </div>
 
-          {/* Hacking Countdown Badge */}
+          {/* Status Badge */}
           <div className="flex justify-center mb-8 animate-fade-in-up delay-100">
-            {hackCountdown.expired ? (
-              <span className="racing-badge registration-badge">
-                <span className="w-2 h-2 rounded-full bg-red-500"></span>
-                Submissions Closed
-              </span>
-            ) : (
-              <span className="racing-badge" style={{ borderColor: 'var(--racing-gold)', color: 'var(--racing-gold)' }}>
-                <span className="w-2 h-2 rounded-full animate-pulse" style={{ background: 'var(--racing-gold)' }}></span>
-                <span className="font-mono" suppressHydrationWarning>
-                  {String(hackCountdown.hours).padStart(2, '0')}:{String(hackCountdown.minutes).padStart(2, '0')}:{String(hackCountdown.seconds).padStart(2, '0')}
-                </span>
-                <span className="text-xs uppercase tracking-widest opacity-80">hacking remaining</span>
-              </span>
-            )}
+            <span className="racing-badge registration-badge" style={{ borderColor: 'var(--racing-gold)', color: 'var(--racing-gold)' }}>
+              <span className="w-2 h-2 rounded-full" style={{ background: 'var(--racing-gold)' }}></span>
+              Event Concluded
+            </span>
           </div>
 
           {/* Main Title */}
@@ -624,28 +313,22 @@ export default function Home() {
             <span className="hero-indy-text">INDY</span>
           </h1>
 
-          <h2 className="font-racing text-3xl sm:text-5xl md:text-7xl lg:text-8xl mb-6 sm:mb-8 animate-fade-in-up delay-300" style={{ color: 'var(--racing-gold)' }}>
-            2026
+          <h2 className="font-racing text-3xl sm:text-4xl md:text-5xl lg:text-6xl mb-8 sm:mb-10 animate-fade-in-up delay-300" style={{ color: 'var(--racing-gold)' }}>
+            SEE YOU NEXT YEAR!
           </h2>
 
           {/* Location & Date Badges */}
-          <div className="flex flex-wrap justify-center gap-2 sm:gap-4 mb-8 sm:mb-10 animate-fade-in-up delay-400">
+          <div className="flex flex-wrap justify-center gap-2 sm:gap-4 mb-8 sm:mb-10 animate-fade-in-up delay-500">
             <span className="racing-badge text-xs sm:text-sm">
               <Icons.MapPin className="w-3 h-3 sm:w-4 sm:h-4" />
               Purdue Indy
-            </span>
-            <span className="racing-badge text-xs sm:text-sm">
-              <Icons.Calendar className="w-3 h-3 sm:w-4 sm:h-4" />
-              Fri 3/27 - Sun 3/29
-            </span>
+            </span> 
           </div>
 
           {/* CTA Buttons */}
           <div className="flex flex-col gap-3 sm:gap-4 justify-center items-center animate-fade-in-up delay-500 px-4">
-            <a
-              href="https://hack-indy-2026.devpost.com/"
-              target="_blank"
-              rel="noopener noreferrer"
+            <Link
+              href="/2026"
               className="w-full max-w-xs sm:w-72 text-center px-6 sm:px-10 py-3 sm:py-4 text-sm sm:text-lg font-semibold border-2 rounded flex items-center justify-center gap-2 sm:gap-3 transition-all duration-300 hover:bg-[rgba(212,168,83,0.15)] hover:scale-105"
               style={{
                 borderColor: 'var(--racing-gold)',
@@ -653,8 +336,8 @@ export default function Home() {
                 background: 'rgba(212,168,83,0.05)'
               }}
             >
-              View Devpost →
-            </a>
+              View 2026 Archive →
+            </Link>
           </div>
         </div>
 
@@ -666,12 +349,6 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Live Now Banner */}
-      <LiveNowBanner
-        fridaySchedule={fridaySchedule}
-        saturdaySchedule={saturdaySchedule}
-        sundaySchedule={sundaySchedule}
-      />
 
       {/* About Section */}
       <section id="about" className="py-24 px-4 relative">
@@ -697,470 +374,11 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Schedule Section - Tabbed Table Layout */}
-      <section id="schedule" className="py-24 relative overflow-hidden">
-        <div className="max-w-6xl mx-auto px-4">
-          <div className="text-center mb-12 scroll-animate">
-            <h2 className="section-header">
-              Race Weekend
-            </h2>
-            <p className="mt-6 text-lg" style={{ color: 'var(--text-secondary)' }}>
-              3 days • 48+ hours of hacking • Endless possibilities
-            </p>
-          </div>
 
-          {/* Day Tabs */}
-          <div className="schedule-tabs scroll-animate">
-            <button
-              className={`schedule-tab ${activeScheduleDay === 'friday' ? 'active' : ''}`}
-              onClick={() => setActiveScheduleDay('friday')}
-            >
-              <Icons.Flag className="w-4 h-4" />
-              <span className="schedule-tab-day">FRI</span>
-              <span className="schedule-tab-date">3/27</span>
-            </button>
-            <button
-              className={`schedule-tab schedule-tab-saturday ${activeScheduleDay === 'saturday' ? 'active' : ''}`}
-              onClick={() => setActiveScheduleDay('saturday')}
-            >
-              <Icons.Wrench className="w-4 h-4" />
-              <span className="schedule-tab-day">SAT</span>
-              <span className="schedule-tab-date">3/28</span>
-            </button>
-            <button
-              className={`schedule-tab schedule-tab-sunday ${activeScheduleDay === 'sunday' ? 'active' : ''}`}
-              onClick={() => setActiveScheduleDay('sunday')}
-            >
-              <Icons.Trophy className="w-4 h-4" />
-              <span className="schedule-tab-day">SUN</span>
-              <span className="schedule-tab-date">3/29</span>
-            </button>
-          </div>
 
-          {/* Schedule Table */}
-          <div className="schedule-table-wrapper scroll-animate" ref={scheduleRef}>
-            <div className="schedule-table-container">
-              {/* Table Header */}
-              <div className="schedule-table-header">
-                <div className="schedule-col-time">
-                  <Icons.Clock className="w-4 h-4" />
-                  <span>Time</span>
-                </div>
-                <div className="schedule-col-event">
-                  <Icons.Flag className="w-4 h-4" />
-                  <span>Event</span>
-                </div>
-                <div className="schedule-col-location">
-                  <Icons.MapPin className="w-4 h-4" />
-                  <span>Location</span>
-                </div>
-              </div>
 
-              {/* Table Body */}
-              <div className="schedule-table-body">
-                {(activeScheduleDay === 'friday' ? fridaySchedule :
-                  activeScheduleDay === 'saturday' ? saturdaySchedule :
-                    sundaySchedule
-                ).map((item, idx) => (
-                  <div
-                    key={`${activeScheduleDay}-${idx}`}
-                    className={`schedule-row ${item.event.toLowerCase().includes('hacking') ? 'schedule-row-hacking' :
-                      item.event.toLowerCase().includes('workshop') ? 'schedule-row-workshop' :
-                        item.event.toLowerCase().includes('dinner') || item.event.toLowerCase().includes('lunch') || item.event.toLowerCase().includes('breakfast') || item.event.toLowerCase().includes('snacks') ? 'schedule-row-food' :
-                          item.event.toLowerCase().includes('ceremony') || item.event.toLowerCase().includes('panel') ? 'schedule-row-highlight' :
-                            ''
-                      }`}
-                    style={{ animationDelay: `${idx * 0.03}s` }}
-                  >
-                    <div className="schedule-cell schedule-cell-time">
-                      <span className="schedule-time-text">{item.time}</span>
-                    </div>
-                    <div className="schedule-cell schedule-cell-event">
-                      <span className="schedule-event-text">{item.event}</span>
-                    </div>
-                    <div className="schedule-cell schedule-cell-location">
-                      <span className="schedule-location-text">{item.location}</span>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
 
-          {/* Day Info Footer */}
-          <div className="schedule-footer scroll-animate">
-            <div className="schedule-footer-info">
-              <span className="schedule-footer-label">
-                {activeScheduleDay === 'friday' ? 'Race Day 1 • Kickoff & Opening' :
-                  activeScheduleDay === 'saturday' ? 'Race Day 2 • Workshops & Hacking' :
-                    'Victory Lap • Submissions & Awards'}
-              </span>
-            </div>
-            <div className="schedule-legend">
-              <div className="legend-item legend-workshop">
-                <span className="legend-dot"></span>
-                Workshop
-              </div>
-              <div className="legend-item legend-food">
-                <span className="legend-dot"></span>
-                Meal
-              </div>
-              <div className="legend-item legend-highlight">
-                <span className="legend-dot"></span>
-                Ceremony
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
 
-      {/* Prizes Section */}
-      <section id="prizes" className="py-24 px-4 relative">
-        <div className="max-w-5xl mx-auto">
-          <div className="text-center mb-16 scroll-animate">
-            <h2 className="section-header">
-              Victory Lane
-            </h2>
-          </div>
-
-          {prizesRevealed ? (
-            <>
-              {/* Podium Layout */}
-              <div className="podium-container">
-                {/* 2nd Place - Left */}
-                <div className="podium-place podium-second">
-                  <div className="podium-card">
-                    <div className="podium-position">2</div>
-                    <div className="podium-icon">
-                      <Icons.Medal className="w-10 h-10" />
-                    </div>
-                    <h3 className="podium-title">2nd Place</h3>
-                    <p className="podium-subtitle">Runner Up</p>
-                  </div>
-                  <div className="podium-stand podium-stand-2">
-                    <span>II</span>
-                  </div>
-                </div>
-
-                {/* 1st Place - Center (Elevated) */}
-                <div className="podium-place podium-first">
-                  <div className="podium-card podium-card-champion">
-                    <div className="champion-glow"></div>
-                    <div className="podium-position podium-position-gold">1</div>
-                    <div className="podium-icon podium-icon-champion">
-                      <Icons.Trophy className="w-14 h-14" />
-                    </div>
-                    <h3 className="podium-title podium-title-champion">Grand Prize</h3>
-                    <p className="podium-subtitle">1st Place Overall Winner</p>
-                  </div>
-                  <div className="podium-stand podium-stand-1">
-                    <span>I</span>
-                  </div>
-                </div>
-
-                {/* 3rd Place - Right */}
-                <div className="podium-place podium-third">
-                  <div className="podium-card">
-                    <div className="podium-position">3</div>
-                    <div className="podium-icon">
-                      <Icons.Medal className="w-10 h-10" />
-                    </div>
-                    <h3 className="podium-title">3rd Place</h3>
-                    <p className="podium-subtitle">Second Runner Up</p>
-                  </div>
-                  <div className="podium-stand podium-stand-3">
-                    <span>III</span>
-                  </div>
-                </div>
-              </div>
-
-              {/* Featherless Opt-In Prize */}
-              <div className="mt-16">
-                <h3 className="text-center font-racing text-2xl mb-2" style={{ color: 'var(--text-primary)' }}>Opt-In Sponsor Prize</h3>
-                <p className="text-center text-sm mb-8" style={{ color: 'var(--text-secondary)' }}>Use Featherless AI in your project to be eligible</p>
-                <div className="racing-card corner-accent p-6 md:p-8 flex flex-col md:flex-row items-center md:items-start gap-6 hover:border-[var(--racing-gold)] transition-colors duration-300" style={{ borderColor: 'var(--border-gold)' }}>
-                  <img src="/sponsors/Featherless Hackathon Assets.png" alt="Featherless AI" className="w-24 h-24 object-contain shrink-0" />
-                  <div className="flex-1 text-center md:text-left">
-                    <p className="text-xs uppercase tracking-widest font-mono mb-1" style={{ color: 'var(--text-muted)' }}>Opt-In Sponsor Prize</p>
-                    <h4 className="font-racing text-xl mb-3" style={{ color: 'var(--text-primary)' }}>Featherless AI Credits</h4>
-                    <p className="text-sm mb-4" style={{ color: 'var(--text-secondary)' }}>Integrate Featherless AI into your project to be eligible for bonus credits on top of your overall prize.</p>
-                    <div className="flex flex-wrap justify-center md:justify-start gap-3">
-                      <span className="racing-badge text-sm">🥇 1st — $300 Credits</span>
-                      <span className="racing-badge text-sm">🥈 2nd — $150 Credits</span>
-                      <span className="racing-badge text-sm">🥉 3rd — $75 Credits</span>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              {/* MLH Category Prizes */}
-              <div className="mt-16">
-                <h3 className="text-center font-racing text-2xl mb-2" style={{ color: 'var(--text-primary)' }}>Sponsor Category Prizes</h3>
-                <p className="text-center text-sm mb-10" style={{ color: 'var(--text-secondary)' }}>Presented by Major League Hacking</p>
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                  {[
-                    {
-                      category: 'Best Use of ElevenLabs',
-                      prize: '🎧 Wireless Earbuds',
-                      description: 'Deploy natural, human-sounding audio with ElevenLabs. Build rich, immersive audio experiences powered by AI.',
-                    },
-                    {
-                      category: 'Best Use of Gemini API',
-                      prize: '🎁 Google Swag Kits',
-                      description: 'Push the boundaries of AI with Google Gemini. Build chatbots, content generators, code assistants, and more.',
-                    },
-                    {
-                      category: 'Best Use of Solana',
-                      prize: '💳 Ledger Nano S Plus',
-                      description: 'Build fast, efficient, and scalable apps on the Solana blockchain with near-zero transaction costs.',
-                    },
-                    {
-                      category: 'Best Use of Vultr',
-                      prize: '🖥️ Portable Screens',
-                      description: 'Harness Vultr\'s cloud compute and GPU infrastructure to power high-performance and AI-driven applications.',
-                    },
-                    {
-                      category: 'Best Use of MongoDB Atlas',
-                      prize: '🔧 M5Stack IoT Kit',
-                      description: 'Store and manage all your data with MongoDB Atlas — free tier available, no credit card required.',
-                    },
-                  ].map((mlh) => (
-                    <div
-                      key={mlh.category}
-                      className="racing-card corner-accent p-5 flex flex-col gap-3 hover:border-[var(--racing-gold)] transition-colors duration-300"
-                    >
-                      <div>
-                        <p className="text-xs uppercase tracking-widest font-mono mb-1" style={{ color: 'var(--text-muted)' }}>MLH Prize</p>
-                        <h4 className="font-racing text-base" style={{ color: 'var(--text-primary)' }}>{mlh.category}</h4>
-                      </div>
-                      <div className="font-semibold text-sm" style={{ color: 'var(--racing-gold)' }}>{mlh.prize}</div>
-                      <p className="text-xs leading-relaxed" style={{ color: 'var(--text-secondary)' }}>{mlh.description}</p>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </>
-          ) : (
-            /* Locked State */
-            <div className="racing-card corner-accent p-10 md:p-16 flex flex-col items-center justify-center gap-6 scroll-animate" style={{ borderColor: 'var(--border-gold)' }}>
-              {/* Lock Icon */}
-              <div
-                className="w-20 h-20 rounded-full flex items-center justify-center"
-                style={{ background: 'rgba(212,168,83,0.1)', border: '2px solid var(--border-gold)' }}
-              >
-                <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ color: 'var(--racing-gold)' }}>
-                  <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
-                  <path d="M7 11V7a5 5 0 0 1 10 0v4" />
-                </svg>
-              </div>
-
-              <div className="text-center">
-                <h3 className="font-racing text-2xl md:text-3xl mb-2" style={{ color: 'var(--racing-gold)' }}>Prizes Locked</h3>
-                <p className="text-sm uppercase tracking-widest" style={{ color: 'var(--text-secondary)' }}>Revealed at the Closing Ceremony — 6:00 PM</p>
-              </div>
-
-              {/* Countdown */}
-              <div className="flex items-center gap-3 font-racing text-4xl md:text-5xl" style={{ color: 'var(--racing-gold)' }}>
-                <div className="flex flex-col items-center">
-                  <span suppressHydrationWarning>{String(prizeCountdown.hours).padStart(2, '0')}</span>
-                  <span className="text-xs font-body uppercase tracking-widest mt-1 opacity-60" style={{ color: 'var(--text-secondary)' }}>Hrs</span>
-                </div>
-                <span className="animate-pulse mb-5 opacity-50">:</span>
-                <div className="flex flex-col items-center">
-                  <span suppressHydrationWarning>{String(prizeCountdown.minutes).padStart(2, '0')}</span>
-                  <span className="text-xs font-body uppercase tracking-widest mt-1 opacity-60" style={{ color: 'var(--text-secondary)' }}>Mins</span>
-                </div>
-                <span className="animate-pulse mb-5 opacity-50">:</span>
-                <div className="flex flex-col items-center">
-                  <span suppressHydrationWarning>{String(prizeCountdown.seconds).padStart(2, '0')}</span>
-                  <span className="text-xs font-body uppercase tracking-widest mt-1 opacity-60" style={{ color: 'var(--text-secondary)' }}>Secs</span>
-                </div>
-              </div>
-
-              <p className="text-xs font-mono opacity-40" style={{ color: 'var(--text-muted)' }}>Stay tuned — prizes drop at 18:00 EDT</p>
-            </div>
-          )}
-        </div>
-      </section>
-
-      {/* Pit Stop Intel - FAQ Section */}
-      <section id="faq" className="py-24 px-4 relative">
-        <div className="max-w-5xl mx-auto">
-          {/* Header with Radio Wave Animation */}
-          <div className="pit-stop-header mb-16 scroll-animate">
-            <div className="radio-wave">
-              <span></span>
-              <span></span>
-              <span></span>
-              <span></span>
-              <span></span>
-            </div>
-            <h2>Pit Stop Intel</h2>
-            <div className="radio-wave">
-              <span></span>
-              <span></span>
-              <span></span>
-              <span></span>
-              <span></span>
-            </div>
-          </div>
-
-          {/* Transmission Cards Grid */}
-          <div className="faq-grid scroll-animate">
-            {faqs.map((faq, index) => (
-              <div
-                key={index}
-                className={`transmission-card faq-card-animate ${openFAQ === index ? 'active' : ''}`}
-                style={{ animationDelay: `${index * 0.1}s` }}
-              >
-                <div
-                  className="transmission-header"
-                  onClick={() => toggleFAQ(index)}
-                >
-                  {/* Channel Badge */}
-                  <div className="channel-badge">
-                    <span className="channel-label">CH</span>
-                    <span className="channel-number">{String(index + 1).padStart(2, '0')}</span>
-                  </div>
-
-                  {/* Transmission Indicator Light */}
-                  <div className="transmission-indicator"></div>
-
-                  {/* Question */}
-                  <span className="transmission-question">{faq.question}</span>
-
-                  {/* Toggle Icon */}
-                  <div className="transmission-toggle">
-                    <Icons.ChevronDown className="w-4 h-4" />
-                  </div>
-                </div>
-
-                {/* Answer Body */}
-                <div className="transmission-body">
-                  <div className="transmission-content">
-                    <p className="transmission-answer">
-                      {faq.answer}
-                      {index === 2 && (
-                        <span>
-                          {' '}
-                          <a
-                            href="https://docs.google.com/forms/d/e/1FAIpQLSctlCayXv6TgBrIyFqtxw2hcVRwAI3RqJP9dsAMW-_AKgbDBg/viewform"
-                            target="_blank"
-                            rel="noopener noreferrer"
-                          >
-                            Interest form
-                          </a>
-                        </span>
-                      )}
-                    </p>
-                  </div>
-
-                  {/* Signal Strength Bars */}
-                  <div className="signal-strength">
-                    <div className="signal-bar"></div>
-                    <div className="signal-bar"></div>
-                    <div className="signal-bar"></div>
-                    <div className="signal-bar"></div>
-                    <div className="signal-bar"></div>
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* Judges Section */}
-      <section id="judges" className="py-24 px-4 relative">
-        <div className="max-w-5xl mx-auto">
-          <div className="text-center mb-16 scroll-animate">
-            <h2 className="section-header">
-              Race Officials
-            </h2>
-            <p className="mt-4 text-lg" style={{ color: 'var(--text-secondary)' }}>
-              The panel evaluating your pit-lane innovations
-            </p>
-          </div>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 scroll-animate">
-            {[
-              { name: 'Mike Hockerman', company: 'Trava Security', role: 'Lead Software Engineer', num: '01' },
-              { name: 'Jim Ulbright', company: 'Crowe LLC', role: 'AI/ML Engineer', num: '02' },
-            ].map((judge) => (
-              <div
-                key={judge.num}
-                className="racing-card corner-accent p-6 flex items-start gap-4 group hover:border-[var(--racing-gold)] transition-colors duration-300"
-              >
-                {/* Race Number Badge */}
-                <div
-                  className="shrink-0 w-12 h-12 rounded flex items-center justify-center font-racing text-xl"
-                  style={{ background: 'rgba(212,168,83,0.1)', border: '1px solid var(--border-gold)', color: 'var(--racing-gold)' }}
-                >
-                  {judge.num}
-                </div>
-                <div>
-                  <h3 className="font-racing text-lg" style={{ color: 'var(--text-primary)' }}>{judge.name}</h3>
-                  <p className="text-sm font-semibold mt-0.5" style={{ color: 'var(--racing-gold)' }}>{judge.company}</p>
-                  <p className="text-xs mt-1 uppercase tracking-widest" style={{ color: 'var(--text-secondary)' }}>{judge.role}</p>
-                </div>
-              </div>
-            ))}
-
-            {/* Manideep Reddy Gillela - Online Mentor */}
-            <div
-              className="racing-card corner-accent p-6 flex items-start gap-4 group hover:border-[var(--racing-gold)] transition-colors duration-300"
-            >
-              <div
-                className="shrink-0 w-12 h-12 rounded flex items-center justify-center font-racing text-xl"
-                style={{ background: 'rgba(212,168,83,0.1)', border: '1px solid var(--border-gold)', color: 'var(--racing-gold)' }}
-              >
-                03
-              </div>
-              <div>
-                <div className="flex flex-wrap items-center gap-2 mb-0.5">
-                  <h3 className="font-racing text-lg" style={{ color: 'var(--text-primary)' }}>Manideep Reddy Gillela</h3>
-                  <span
-                    className="racing-badge text-xs flex items-center gap-1.5"
-                    style={{ borderColor: 'var(--racing-gold)', color: 'var(--racing-gold)' }}
-                  >
-                    <span className="w-1.5 h-1.5 rounded-full" style={{ background: 'var(--racing-gold)' }} />
-                    Online
-                  </span>
-                </div>
-                <p className="text-sm font-semibold" style={{ color: 'var(--racing-gold)' }}>Amazon Web Services</p>
-                <p className="text-xs mt-1 uppercase tracking-widest" style={{ color: 'var(--text-secondary)' }}>Online Mentor</p>
-              </div>
-            </div>
-
-            {/* Lyna Nguyen */}
-            <div
-              className="racing-card corner-accent p-6 flex items-start gap-4 group hover:border-[var(--racing-gold)] transition-colors duration-300"
-            >
-              {/* Race Number Badge */}
-              <div
-                className="shrink-0 w-12 h-12 rounded flex items-center justify-center font-racing text-xl"
-                style={{ background: 'rgba(212,168,83,0.1)', border: '1px solid var(--border-gold)', color: 'var(--racing-gold)' }}
-              >
-                04
-              </div>
-              <div>
-                <div className="flex flex-wrap items-center gap-2 mb-0.5">
-                  <h3 className="font-racing text-lg" style={{ color: 'var(--text-primary)' }}>Lyna Nguyen</h3>
-                  <span
-                    className="racing-badge text-xs flex items-center gap-1.5"
-                    style={{ borderColor: 'var(--racing-gold)', color: 'var(--racing-gold)' }}
-                  >
-                    <span className="w-1.5 h-1.5 rounded-full" style={{ background: 'var(--racing-gold)' }} />
-                    MLH Coach
-                  </span>
-                </div>
-                <p className="text-sm font-semibold" style={{ color: 'var(--racing-gold)' }}>Apple</p>
-                <p className="text-xs mt-1 uppercase tracking-widest" style={{ color: 'var(--text-secondary)' }}>Engineering Project Manager</p>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
 
       {/* Sponsors Garage Section */}
       <section id="sponsors" className="py-24 px-4 relative">
