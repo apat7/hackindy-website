@@ -4,8 +4,9 @@ import { useState } from "react";
 import { TUNING as T } from "./tuning";
 
 // Live feel knobs. Sliders mutate TUNING directly — the physics reads it
-// every frame, so changes apply instantly. COPY VALUES puts the current
-// numbers on the clipboard to paste back into tuning.js.
+// every frame, so changes apply instantly. RESET restores the defaults
+// captured at load time.
+const DEFAULTS = JSON.parse(JSON.stringify(T));
 const FIELDS = [
   ["maxSpeed", 10, 50, 1],
   ["engineAccel", 8, 50, 1],
@@ -43,7 +44,6 @@ function Slider({ label, value, min, max, step, onChange }) {
 
 export default function TuningPanel() {
   const [open, setOpen] = useState(false);
-  const [copied, setCopied] = useState(false);
   const [, bump] = useState(0);
   const refresh = () => bump((n) => n + 1);
 
@@ -102,13 +102,14 @@ export default function TuningPanel() {
             type="button"
             className="mt-1 w-full border border-gold-dim/60 py-1.5 text-gold hover:bg-gold hover:text-coal"
             onClick={(e) => {
-              navigator.clipboard?.writeText(JSON.stringify(T, null, 2));
-              setCopied(true);
-              setTimeout(() => setCopied(false), 1800);
+              for (const [k, v] of Object.entries(DEFAULTS)) {
+                T[k] = Array.isArray(v) ? [...v] : v;
+              }
+              refresh();
               e.currentTarget.blur();
             }}
           >
-            {copied ? "COPIED ✓" : "COPY VALUES"}
+            RESET DEFAULTS
           </button>
         </div>
       )}

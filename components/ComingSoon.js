@@ -135,23 +135,6 @@ export default function ComingSoon() {
 
       {/* layer 3 — chrome */}
       <div className="pointer-events-none absolute inset-0 z-20 flex flex-col font-mono">
-        {/* pit-board tag by the car — the rotation lives on the button because
-            anim-rise ends at transform:none and would wipe it off the wrapper */}
-        {canDrive && !driving && (
-          <div
-            className="anim-rise pointer-events-none absolute left-[12%] top-[67%]"
-            style={{ animationDelay: "4s" }}
-          >
-            <button
-              type="button"
-              onClick={enterDrive}
-              className="btn-plate btn-plate--compact pointer-events-auto"
-              style={{ transform: "rotate(-5deg)" }}
-            >
-              <span>TAKE IT FOR A SPIN</span>
-            </button>
-          </div>
-        )}
         <div className="flex-1" />
 
         {/* drag hint, sitting just under the car */}
