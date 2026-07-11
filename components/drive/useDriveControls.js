@@ -29,7 +29,11 @@ export default function useDriveControls() {
     };
     const up = (e) => {
       const k = KEYMAP[e.code];
-      if (k) keys.current[k] = false;
+      if (!k) return;
+      // space keyup "clicks" whichever HUD button still holds focus —
+      // swallowing it keeps the handbrake a handbrake
+      e.preventDefault();
+      keys.current[k] = false;
     };
     const clear = () => {
       for (const k of Object.keys(keys.current)) keys.current[k] = false;

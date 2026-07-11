@@ -7,6 +7,7 @@ import { Physics } from "@react-three/rapier";
 import DriveWorld from "./DriveWorld";
 import DriveCar, { FollowCamera, SPAWN } from "./DriveCar";
 import { TireSmoke, SkidMarks } from "./Effects";
+import TuningPanel from "./TuningPanel";
 
 // Mounts only once Suspense inside the Canvas has resolved — signals "world ready".
 function SceneReady({ onReady }) {
@@ -235,11 +236,15 @@ export default function DriveMode({ onExit, onCovered, reduceMotion }) {
           </button>
           <button
             type="button"
-            onClick={doReset}
+            onClick={(e) => {
+              doReset();
+              e.currentTarget.blur(); // or the next Space "clicks" reset again
+            }}
             className="btn-plate btn-plate--compact pointer-events-auto absolute top-6 right-6"
           >
             <span>RESET GRID</span>
           </button>
+          <TuningPanel />
           <p className="absolute bottom-6 inset-x-0 text-center text-[0.6rem] tracking-[0.4em] text-steel">
             W A S D DRIVE · SPACE SLIDE · R RESET · ESC PITS
           </p>

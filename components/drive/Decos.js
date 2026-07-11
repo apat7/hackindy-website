@@ -46,6 +46,39 @@ function prep(object, rotDeg, targetDiameter) {
   inner.rotation.set((rotDeg[0] * Math.PI) / 180, 0, (rotDeg[1] * Math.PI) / 180);
   inner.add(object);
   inner.updateMatrixWorld(true);
+
+  // prune interior junk: any component poking clearly above/below the main
+  // tire body (largest footprint) inflates the collider and floats the tire
+  const kids = [];
+  inner.traverse((o) => {
+    if (o.isMesh) kids.push(o);
+  });
+  if (kids.length > 1) {
+    let main = null;
+    let mainArea = 0;
+    const boxes = new Map();
+    for (const k of kids) {
+      const b = new THREE.Box3().setFromObject(k);
+      boxes.set(k, b);
+      const s = b.getSize(new THREE.Vector3());
+      const area = s.x * s.z;
+      if (area > mainArea) {
+        mainArea = area;
+        main = k;
+      }
+    }
+    const mb = boxes.get(main);
+    const tol = (mb.max.y - mb.min.y) * 0.2;
+    for (const k of kids) {
+      if (k === main) continue;
+      const b = boxes.get(k);
+      if (b.min.y < mb.min.y - tol || b.max.y > mb.max.y + tol) {
+        k.removeFromParent();
+      }
+    }
+    inner.updateMatrixWorld(true);
+  }
+
   _box.setFromObject(inner);
   const size = _box.getSize(new THREE.Vector3());
   if (!isFinite(size.x) || !isFinite(size.y) || Math.max(size.x, size.z) < 0.01) {
