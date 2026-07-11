@@ -146,7 +146,9 @@ export default function DriveMode({ onExit, onCovered, reduceMotion }) {
         api.setRotation(init.q, true);
         api.setLinvel({ x: 0, y: 0, z: 0 }, true);
         api.setAngvel({ x: 0, y: 0, z: 0 }, true);
-        api.sleep();
+        // no api.sleep() here: the lib skips mesh sync for sleeping bodies,
+        // so force-sleeping a just-teleported body freezes its visual at the
+        // old pose; they fall asleep on their own once settled
       } catch {
         registry.current.delete(api); // freed-world ghost — drop it
       }
