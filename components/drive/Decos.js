@@ -18,26 +18,6 @@ const WHEEL_ROTATIONS = [
 const WHEEL_DIAMETER = 1.35;
 const CONE_HEIGHT = 0.85;
 
-// sampled y-extent between percentiles — bounding boxes lie about wheels
-// because calipers/axle stubs protrude, which fattened the collider and left
-// the visible tire floating inside it
-function yPercentiles(object, lo, hi) {
-  object.updateMatrixWorld(true);
-  const ys = [];
-  const v = new THREE.Vector3();
-  object.traverse((o) => {
-    if (!o.isMesh) return;
-    const pos = o.geometry.attributes.position;
-    const step = Math.max(1, Math.floor(pos.count / 800));
-    for (let i = 0; i < pos.count; i += step) {
-      v.fromBufferAttribute(pos, i).applyMatrix4(o.matrixWorld);
-      ys.push(v.y);
-    }
-  });
-  ys.sort((a, b) => a - b);
-  return [ys[Math.floor(ys.length * lo)], ys[Math.min(ys.length - 1, Math.floor(ys.length * hi))]];
-}
-
 // wrap `object` so it lies flat, scaled to `targetDiameter`, bottom at y=0.
 // Returns null for degenerate input — a zero/NaN-sized collider panics the
 // rapier WASM and poisons the whole world ("recursive use of an object").
@@ -47,37 +27,39 @@ function prep(object, rotDeg, targetDiameter) {
   inner.add(object);
   inner.updateMatrixWorld(true);
 
-  // prune interior junk: any component poking clearly above/below the main
-  // tire body (largest footprint) inflates the collider and floats the tire
+  // the largest-footprint component is the tire itself — everything else is
+  // rim/caliper garnish. The tire's own extent is the ONLY trustworthy
+  // height: cluster aggregates (even percentile-trimmed) kept padding the
+  // collider, which floated stacked wheels on invisible margins.
   const kids = [];
   inner.traverse((o) => {
     if (o.isMesh) kids.push(o);
   });
-  if (kids.length > 1) {
-    let main = null;
-    let mainArea = 0;
-    const boxes = new Map();
-    for (const k of kids) {
-      const b = new THREE.Box3().setFromObject(k);
-      boxes.set(k, b);
-      const s = b.getSize(new THREE.Vector3());
-      const area = s.x * s.z;
-      if (area > mainArea) {
-        mainArea = area;
-        main = k;
-      }
+  if (kids.length === 0) return null;
+  let main = null;
+  let mainArea = 0;
+  const boxes = new Map();
+  for (const k of kids) {
+    const b = new THREE.Box3().setFromObject(k);
+    boxes.set(k, b);
+    const s = b.getSize(new THREE.Vector3());
+    const area = s.x * s.z;
+    if (area > mainArea) {
+      mainArea = area;
+      main = k;
     }
-    const mb = boxes.get(main);
-    const tol = (mb.max.y - mb.min.y) * 0.2;
-    for (const k of kids) {
-      if (k === main) continue;
-      const b = boxes.get(k);
-      if (b.min.y < mb.min.y - tol || b.max.y > mb.max.y + tol) {
-        k.removeFromParent();
-      }
-    }
-    inner.updateMatrixWorld(true);
   }
+  const mb = boxes.get(main);
+  // prune parts poking clearly past the tire body
+  const tol = (mb.max.y - mb.min.y) * 0.2;
+  for (const k of kids) {
+    if (k === main) continue;
+    const b = boxes.get(k);
+    if (b.min.y < mb.min.y - tol || b.max.y > mb.max.y + tol) {
+      k.removeFromParent();
+    }
+  }
+  inner.updateMatrixWorld(true);
 
   _box.setFromObject(inner);
   const size = _box.getSize(new THREE.Vector3());
@@ -89,11 +71,9 @@ function prep(object, rotDeg, targetDiameter) {
   const wrapper = new THREE.Group();
   wrapper.add(inner);
   inner.scale.setScalar(s);
-  inner.position.set(-center.x * s, 0, -center.z * s);
-  // ground the BULK of the wheel (2nd percentile), not stray protrusions
-  const [y2, y98] = yPercentiles(wrapper, 0.02, 0.98);
-  inner.position.y = -y2;
-  const height = y98 - y2;
+  // ground and size by the tire component; clamp to real tire proportions
+  const height = Math.min((mb.max.y - mb.min.y) * s, targetDiameter * 0.5);
+  inner.position.set(-center.x * s, -mb.min.y * s, -center.z * s);
   if (!isFinite(height) || height < 0.02) return null;
   wrapper.traverse((o) => {
     if (o.isMesh) o.castShadow = true;
