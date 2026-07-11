@@ -34,10 +34,16 @@ function makeSlabTexture(label) {
   g.closePath();
   g.fill();
   g.fillStyle = "#CFB991";
-  g.font = "600 84px monospace";
   g.textAlign = "center";
   g.textBaseline = "middle";
-  g.fillText(label.split("").join(" "), c.width / 2, c.height / 2 + 4);
+  // shrink to fit: long labels ("2026 SEASON") overflow at a fixed size
+  const text = label.split("").join(" ");
+  let px = 96;
+  do {
+    g.font = `600 ${px}px monospace`;
+    px -= 4;
+  } while (px > 32 && g.measureText(text).width > c.width - 170);
+  g.fillText(text, c.width / 2, c.height / 2 + 4);
   const tex = new THREE.CanvasTexture(c);
   tex.colorSpace = THREE.SRGBColorSpace;
   return tex;
@@ -69,52 +75,8 @@ export function PitSlab({ label, position, rotationY = 0, register }) {
       rotation={[0, rotationY, 0]}
     >
       <mesh material={mats} castShadow receiveShadow>
-        <boxGeometry args={[4.4, 1.3, 0.35]} />
+        <boxGeometry args={[5.4, 1.5, 0.4]} />
       </mesh>
     </RigidBody>
   );
-}
-
-const coneGold = new THREE.MeshStandardMaterial({ color: "#CFB991", roughness: 0.5 });
-
-export function Cone({ position, register }) {
-  return (
-    <RigidBody
-      ref={register({
-        p: { x: position[0], y: position[1], z: position[2] },
-        q: yQuat(0),
-      })}
-      colliders="hull"
-      density={0.25}
-      friction={0.7}
-      position={position}
-    >
-      <mesh material={coneGold} castShadow>
-        <coneGeometry args={[0.42, 1.05, 14]} />
-      </mesh>
-    </RigidBody>
-  );
-}
-
-const tireBlack = new THREE.MeshStandardMaterial({ color: "#141414", roughness: 0.9 });
-
-export function TireStack({ position, count = 2, register }) {
-  return Array.from({ length: count }, (_, i) => {
-    const p = [position[0], 0.19 + i * 0.38, position[2]];
-    return (
-      <RigidBody
-        key={i}
-        ref={register({ p: { x: p[0], y: p[1], z: p[2] }, q: yQuat(0) })}
-        colliders={false}
-        density={0.6}
-        friction={0.8}
-        position={p}
-      >
-        <CylinderCollider args={[0.19, 0.56]} />
-        <mesh material={tireBlack} castShadow>
-          <cylinderGeometry args={[0.56, 0.56, 0.38, 20]} />
-        </mesh>
-      </RigidBody>
-    );
-  });
 }

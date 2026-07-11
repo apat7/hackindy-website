@@ -4,7 +4,8 @@ import { useMemo } from "react";
 import * as THREE from "three";
 import { RigidBody, CuboidCollider } from "@react-three/rapier";
 import LetterBodies from "./LetterBodies";
-import { PitSlab, Cone, TireStack } from "./Props";
+import { PitSlab } from "./Props";
+import Decorations from "./Decos";
 
 const W = 120; // world edge, meters
 
@@ -107,18 +108,13 @@ export default function DriveWorld({ register, shake, reduceMotion }) {
       />
 
       {/* the homepage buttons, made physical */}
-      <PitSlab label="UPDATE ME" position={[-16, 0.65, 7]} rotationY={0.3} register={register} />
-      <PitSlab label="2026 SEASON" position={[19, 0.65, 5]} rotationY={-0.25} register={register} />
-      <PitSlab label="CONTACT US" position={[14, 0.65, -13]} rotationY={0.6} register={register} />
+      <PitSlab label="UPDATE ME" position={[-16, 0.75, 7]} rotationY={0.3} register={register} />
+      <PitSlab label="2026 SEASON" position={[19, 0.75, 5]} rotationY={-0.25} register={register} />
+      <PitSlab label="CONTACT US" position={[14, 0.75, -13]} rotationY={0.6} register={register} />
 
-      {/* trackside clutter (clear of the donut rings at (30, -10)) */}
-      {[[6, 20], [8, 22], [26, -6], [28, -12], [24, -14], [-22, -14], [-24, 8]].map(([x, z]) => (
-        <Cone key={`${x},${z}`} position={[x, 0.525, z]} register={register} />
-      ))}
-      <TireStack position={[-26, 0, 20]} count={3} register={register} />
-      <TireStack position={[-23, 0, 21]} count={2} register={register} />
-      <TireStack position={[30, 0, 16]} count={2} register={register} />
-      <TireStack position={[-18, 0, -24]} count={3} register={register} />
+      {/* trackside clutter — real cone + wheel models (clear of the donut
+          rings at (30, -10)) */}
+      <Decorations register={register} />
 
       <RigidBody type="fixed" colliders={false}>
         <CuboidCollider args={[W / 2, 1, W / 2]} position={[0, -1, 0]} />
