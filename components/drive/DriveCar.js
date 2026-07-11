@@ -41,9 +41,27 @@ function buildWheelRig(root) {
   return { pivots, radius, forwardSign };
 }
 
-export default function DriveCar({ telemetry, resetSignal }) {
+export default function DriveCar({ telemetry, resetSignal, register }) {
   const { scene } = useGLTF("/indycar.glb");
   const bodyRef = useRef();
+  // the car joins the reset registry so it teleports in the same tick as the
+  // letters — resetting it a frame later leaves its collider overlapping a
+  // freshly-reset body, and the depenetration shove sends letters flying
+  const registerCar = useMemo(
+    () =>
+      register
+        ? register({
+            p: { x: SPAWN.x, y: 0, z: SPAWN.z },
+            q: {
+              x: 0,
+              y: Math.sin(SPAWN.yaw / 2),
+              z: 0,
+              w: Math.cos(SPAWN.yaw / 2),
+            },
+          })
+        : null,
+    [register]
+  );
   const leanRef = useRef();
   const stateRef = useRef(createCarState(SPAWN.x, SPAWN.z, SPAWN.yaw));
   const lastReset = useRef(0);
@@ -148,7 +166,10 @@ export default function DriveCar({ telemetry, resetSignal }) {
 
   return (
     <RigidBody
-      ref={bodyRef}
+      ref={(api) => {
+        bodyRef.current = api;
+        registerCar?.(api);
+      }}
       type="kinematicPosition"
       colliders={false}
       position={[SPAWN.x, 0, SPAWN.z]}

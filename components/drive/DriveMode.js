@@ -1,6 +1,6 @@
 "use client";
 
-import { Suspense, useEffect, useRef, useState } from "react";
+import { Suspense, useCallback, useEffect, useRef, useState } from "react";
 import { Canvas } from "@react-three/fiber";
 import { Environment } from "@react-three/drei";
 import { Physics } from "@react-three/rapier";
@@ -116,14 +116,51 @@ export default function DriveMode({ onExit, onCovered, reduceMotion }) {
   const shake = useRef(0);
   const resetSignal = useRef(0);
 
+  // every dynamic body registers its spawn transform; reset teleports them
+  // back and zeroes velocities (the car listens to resetSignal instead).
+  // The ref callback must unregister on null: StrictMode tears the physics
+  // world down and up again, and a stale api whose world was freed makes any
+  // rapier call — even isValid() — blow up inside the WASM.
+  const registry = useRef(new Map());
+  const register = useCallback((init) => {
+    let current = null;
+    return (api) => {
+      if (api) {
+        current = api;
+        registry.current.set(api, init);
+      } else if (current) {
+        registry.current.delete(current);
+        current = null;
+      }
+    };
+  }, []);
+  const doReset = useCallback(() => {
+    resetSignal.current++;
+    for (const [api, init] of registry.current) {
+      try {
+        if (!api.isValid()) {
+          registry.current.delete(api);
+          continue;
+        }
+        api.setTranslation(init.p, true);
+        api.setRotation(init.q, true);
+        api.setLinvel({ x: 0, y: 0, z: 0 }, true);
+        api.setAngvel({ x: 0, y: 0, z: 0 }, true);
+        api.sleep();
+      } catch {
+        registry.current.delete(api); // freed-world ghost — drop it
+      }
+    }
+  }, []);
+
   useEffect(() => {
     const onKey = (e) => {
       if (e.key === "Escape") onExit();
-      if (e.code === "KeyR") resetSignal.current++;
+      if (e.code === "KeyR") doReset();
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [onExit]);
+  }, [onExit, doReset]);
 
   return (
     <div className="fixed inset-0 z-40 bg-coal">
@@ -157,8 +194,8 @@ export default function DriveMode({ onExit, onCovered, reduceMotion }) {
           />
           <Environment files="/night_sky.hdr" />
           <Physics timeStep={1 / 60}>
-            <DriveWorld />
-            <DriveCar telemetry={telemetry} resetSignal={resetSignal} />
+            <DriveWorld register={register} shake={shake} reduceMotion={reduceMotion} />
+            <DriveCar telemetry={telemetry} resetSignal={resetSignal} register={register} />
           </Physics>
           <ChaseCamera telemetry={telemetry} shake={shake} reduceMotion={reduceMotion} />
           <SceneReady onReady={() => setReady(true)} />
@@ -182,6 +219,13 @@ export default function DriveMode({ onExit, onCovered, reduceMotion }) {
             className="btn-plate btn-plate--compact pointer-events-auto absolute top-6 left-6"
           >
             <span>◄ BACK TO THE PITS</span>
+          </button>
+          <button
+            type="button"
+            onClick={doReset}
+            className="btn-plate btn-plate--compact pointer-events-auto absolute top-6 right-6"
+          >
+            <span>RESET GRID</span>
           </button>
           <p className="absolute bottom-6 inset-x-0 text-center text-[0.6rem] tracking-[0.4em] text-steel">
             W A S D DRIVE · SPACE SLIDE · R RESET · ESC PITS

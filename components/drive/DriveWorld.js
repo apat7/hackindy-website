@@ -3,6 +3,7 @@
 import { useMemo } from "react";
 import * as THREE from "three";
 import { RigidBody, CuboidCollider } from "@react-three/rapier";
+import LetterBodies from "./LetterBodies";
 
 const W = 120; // world edge, meters
 
@@ -32,9 +33,10 @@ function makeGroundTexture() {
     g.stroke();
   }
 
-  // world (x, z) → canvas coords: u = (x + 60)·m, v = (60 − z)·m
+  // world (x, z) → canvas coords. The plane is rotated -π/2 about x, which
+  // points canvas-top toward world -z, so +z maps to increasing canvas y.
   const X = (x) => (x + W / 2) * m;
-  const Z = (z) => (W / 2 - z) * m;
+  const Z = (z) => (z + W / 2) * m;
 
   // checker start strip across the spawn area (z ≈ 12, 40 m wide)
   const sq = 1.2 * m;
@@ -78,11 +80,31 @@ const WALLS = [
   { pos: [-W / 2, 0, 0], size: [0.35, 3, W / 2] },
 ];
 
-export default function DriveWorld() {
+export default function DriveWorld({ register, shake, reduceMotion }) {
   const tex = useMemo(makeGroundTexture, []);
 
   return (
     <>
+      {/* the homepage, made physical */}
+      <LetterBodies
+        text="HACK INDY"
+        size={3.4}
+        depth={0.9}
+        z={0}
+        register={register}
+        shake={shake}
+        reduceMotion={reduceMotion}
+      />
+      <LetterBodies
+        text="2027"
+        size={2.2}
+        depth={0.7}
+        z={-10}
+        register={register}
+        shake={shake}
+        reduceMotion={reduceMotion}
+      />
+
       <RigidBody type="fixed" colliders={false}>
         <CuboidCollider args={[W / 2, 1, W / 2]} position={[0, -1, 0]} />
         <mesh rotation-x={-Math.PI / 2} receiveShadow>
