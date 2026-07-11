@@ -2,6 +2,9 @@
 
 import { Suspense, useEffect, useRef, useState } from "react";
 import { Canvas } from "@react-three/fiber";
+import { Environment } from "@react-three/drei";
+import { Physics } from "@react-three/rapier";
+import DriveWorld from "./DriveWorld";
 
 // Mounts only once Suspense inside the Canvas has resolved — signals "world ready".
 function SceneReady({ onReady }) {
@@ -9,21 +12,6 @@ function SceneReady({ onReady }) {
     onReady();
   }, [onReady]);
   return null;
-}
-
-// Placeholder world — replaced with the physics world in a later task.
-function PlaceholderWorld() {
-  return (
-    <>
-      <color attach="background" args={["#0b0a08"]} />
-      <ambientLight intensity={0.5} />
-      <directionalLight position={[10, 20, 10]} intensity={2} />
-      <mesh rotation-x={-Math.PI / 2}>
-        <planeGeometry args={[120, 120]} />
-        <meshStandardMaterial color="#141210" />
-      </mesh>
-    </>
-  );
 }
 
 // F1 start gantry: lights come on one by one, hold, then out — reveal.
@@ -135,7 +123,25 @@ export default function DriveMode({ onExit, onCovered, reduceMotion }) {
         }}
       >
         <Suspense fallback={null}>
-          <PlaceholderWorld />
+          <color attach="background" args={["#0b0a08"]} />
+          <fog attach="fog" args={["#0b0a08", 70, 150]} />
+          <ambientLight intensity={0.4} />
+          <directionalLight
+            castShadow
+            position={[25, 35, 15]}
+            intensity={2.4}
+            shadow-mapSize-width={2048}
+            shadow-mapSize-height={2048}
+            shadow-camera-left={-70}
+            shadow-camera-right={70}
+            shadow-camera-top={70}
+            shadow-camera-bottom={-70}
+            shadow-camera-far={120}
+          />
+          <Environment files="/night_sky.hdr" />
+          <Physics timeStep={1 / 60}>
+            <DriveWorld />
+          </Physics>
           <SceneReady onReady={() => setReady(true)} />
         </Suspense>
       </Canvas>
