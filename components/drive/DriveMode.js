@@ -6,6 +6,7 @@ import { Environment } from "@react-three/drei";
 import { Physics } from "@react-three/rapier";
 import DriveWorld from "./DriveWorld";
 import DriveCar, { ChaseCamera, SPAWN } from "./DriveCar";
+import { TireSmoke, SkidMarks } from "./Effects";
 
 // Mounts only once Suspense inside the Canvas has resolved — signals "world ready".
 function SceneReady({ onReady }) {
@@ -100,6 +101,7 @@ function StartLights({ ready, reduceMotion, onCovered, onDone }) {
 export default function DriveMode({ onExit, onCovered, reduceMotion }) {
   const [ready, setReady] = useState(false);
   const [revealed, setRevealed] = useState(false);
+  const [flashKey, setFlashKey] = useState(0);
   const telemetry = useRef({
     x: SPAWN.x,
     z: SPAWN.z,
@@ -153,6 +155,7 @@ export default function DriveMode({ onExit, onCovered, reduceMotion }) {
         registry.current.delete(api); // freed-world ghost — drop it
       }
     }
+    setFlashKey((k) => k + 1);
   }, []);
 
   useEffect(() => {
@@ -198,11 +201,17 @@ export default function DriveMode({ onExit, onCovered, reduceMotion }) {
           <Physics timeStep={1 / 60}>
             <DriveWorld register={register} shake={shake} reduceMotion={reduceMotion} />
             <DriveCar telemetry={telemetry} resetSignal={resetSignal} register={register} />
+            <TireSmoke telemetry={telemetry} reduceMotion={reduceMotion} />
+            <SkidMarks telemetry={telemetry} />
           </Physics>
           <ChaseCamera telemetry={telemetry} shake={shake} reduceMotion={reduceMotion} />
           <SceneReady onReady={() => setReady(true)} />
         </Suspense>
       </Canvas>
+
+      {flashKey > 0 && !reduceMotion && (
+        <div key={flashKey} className="drive-flash drive-flash--go" />
+      )}
 
       {!revealed && (
         <StartLights

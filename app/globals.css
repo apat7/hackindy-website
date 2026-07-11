@@ -209,6 +209,28 @@ body {
   }
 }
 
+/* quick coal flash when the grid resets */
+@keyframes drive-flash {
+  from {
+    opacity: 0.55;
+  }
+  to {
+    opacity: 0;
+  }
+}
+
+.drive-flash {
+  position: absolute;
+  inset: 0;
+  background: var(--color-coal);
+  pointer-events: none;
+  opacity: 0;
+}
+
+.drive-flash--go {
+  animation: drive-flash 0.35s ease-out;
+}
+
 @keyframes rise {
   from {
     opacity: 0;
