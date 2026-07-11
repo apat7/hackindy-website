@@ -62,6 +62,35 @@ test("handbrake keeps the slide alive", () => {
   );
 });
 
+test("steers while coasting (no throttle needed)", () => {
+  let s = run(createCarState(0, 0, 0), { throttle: 1 }, 2);
+  s = run(s, {}, 0.5); // lift off
+  const yawBefore = s.yaw;
+  s = run(s, { steer: 1 }, 1); // steer without gas
+  assert.ok(s.yaw - yawBefore > 0.25, `coasting yaw delta ${s.yaw - yawBefore}`);
+});
+
+test("steers mid-slide when velocity is mostly lateral", () => {
+  // long handbrake drift scrubs forward speed to ~0 while lateral speed
+  // stays high — the car is still moving fast and must remain steerable
+  let s = run(createCarState(0, 0, 0), { throttle: 1 }, 3);
+  s = run(s, { steer: 1, handbrake: true }, 2);
+  assert.ok(Math.hypot(s.vx, s.vz) > 2, `still moving: ${Math.hypot(s.vx, s.vz)}`);
+  const yawBefore = s.yaw;
+  s = run(s, { steer: -1, handbrake: true }, 0.8); // counter-steer, no throttle
+  assert.ok(yawBefore - s.yaw > 0.15, `counter-steer yaw delta ${yawBefore - s.yaw}`);
+});
+
+test("drift bleeds slip back into forward speed", () => {
+  let s = run(createCarState(0, 0, 0), { throttle: 1 }, 3);
+  const before = Math.hypot(s.vx, s.vz);
+  s = run(s, { steer: 1, handbrake: true }, 0.7); // throw it sideways
+  s = run(s, {}, 1.2); // hook up, no inputs
+  const after = Math.hypot(s.vx, s.vz);
+  assert.ok(after > before * 0.4, `speed after drift ${after} vs before ${before}`);
+  assert.ok(s.speed > 3, `forward speed after hook-up ${s.speed}`);
+});
+
 test("roughly framerate independent", () => {
   const a = run(createCarState(0, 0, 0), { throttle: 1, steer: 0.5 }, 4, 1 / 60);
   const b = run(createCarState(0, 0, 0), { throttle: 1, steer: 0.5 }, 4, 1 / 120);

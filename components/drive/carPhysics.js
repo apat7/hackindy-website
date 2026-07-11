@@ -30,15 +30,24 @@ export function stepCar(state, input, dt, T) {
   const resist = (T.rollingResist + T.drag * Math.abs(vF)) * dt;
   vF -= Math.sign(vF) * Math.min(Math.abs(vF), resist);
 
-  // steering authority ramps in with speed, falls off at the top end,
-  // and mirrors when reversing (like a real steered front axle)
+  // steering authority ramps in with PLANAR speed (forward + lateral), not
+  // just forward speed: mid-drift the velocity is mostly lateral and the car
+  // must stay steerable without touching the throttle. Mirrors only when
+  // solidly reversing.
+  const planar = Math.hypot(vF, vL);
   const authority =
-    Math.min(Math.abs(vF) / T.fullSteerSpeed, 1) / (1 + T.steerFalloff * Math.abs(vF));
-  const yawRate = input.steer * T.steerRate * authority * (vF < 0 ? -1 : 1);
+    Math.min(planar / T.fullSteerSpeed, 1) / (1 + T.steerFalloff * planar);
+  const yawRate = input.steer * T.steerRate * authority * (vF < -0.5 ? -1 : 1);
   const yaw = state.yaw + yawRate * dt;
 
+  // grip bleeds lateral velocity — but the tires hooking up should convert
+  // that momentum into forward drive, not delete it, or every drift exit
+  // feels dead until the throttle rebuilds speed from zero
   const grip = input.handbrake ? T.driftGrip : T.grip;
+  const vLBefore = Math.abs(vL);
   vL *= Math.exp(-grip * dt);
+  vF += (vLBefore - Math.abs(vL)) * T.slipTransfer * (vF < -0.5 ? -1 : 1);
+  if (vF > T.maxSpeed) vF = T.maxSpeed;
 
   // reassemble against the OLD heading: the velocity vector must not rotate
   // with the car — next frame's decomposition against the new heading is what

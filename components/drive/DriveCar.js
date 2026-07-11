@@ -72,6 +72,11 @@ export default function DriveCar({ telemetry, resetSignal, register }) {
 
   const { clone, rig, fit } = useMemo(() => {
     const clone = scene.clone(true); // teaser owns the cached original
+    // the clone copies STALE matrixWorld values from the teaser render
+    // (including its ~86× fit scale); Box3.setFromObject on a child node
+    // trusts parent matrixWorld, so without this pass the wheel pivots land
+    // at teaser-world coords and spinning makes wheels orbit off the car
+    clone.updateMatrixWorld(true);
     clone.traverse((o) => {
       if (o.isMesh) o.castShadow = true;
     });

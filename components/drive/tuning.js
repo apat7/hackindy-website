@@ -18,6 +18,7 @@ export const TUNING = {
   grip: 6.5,
   driftGrip: 1.4,
   handbrakeDecel: 8,
+  slipTransfer: 0.7, // fraction of bled lateral speed returned as forward drive
 
   // camera
   camDist: 8,
