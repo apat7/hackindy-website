@@ -2,15 +2,12 @@
 
 import { useEffect, useRef } from "react";
 
+// WASD only — arrow keys suffer key-ghosting on many boards and felt worse
 const KEYMAP = {
   KeyW: "up",
-  ArrowUp: "up",
   KeyS: "down",
-  ArrowDown: "down",
   KeyA: "left",
-  ArrowLeft: "left",
   KeyD: "right",
-  ArrowRight: "right",
   Space: "handbrake",
 };
 

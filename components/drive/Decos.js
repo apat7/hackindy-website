@@ -18,6 +18,26 @@ const WHEEL_ROTATIONS = [
 const WHEEL_DIAMETER = 1.35;
 const CONE_HEIGHT = 0.85;
 
+// sampled y-extent between percentiles — bounding boxes lie about wheels
+// because calipers/axle stubs protrude, which fattened the collider and left
+// the visible tire floating inside it
+function yPercentiles(object, lo, hi) {
+  object.updateMatrixWorld(true);
+  const ys = [];
+  const v = new THREE.Vector3();
+  object.traverse((o) => {
+    if (!o.isMesh) return;
+    const pos = o.geometry.attributes.position;
+    const step = Math.max(1, Math.floor(pos.count / 800));
+    for (let i = 0; i < pos.count; i += step) {
+      v.fromBufferAttribute(pos, i).applyMatrix4(o.matrixWorld);
+      ys.push(v.y);
+    }
+  });
+  ys.sort((a, b) => a - b);
+  return [ys[Math.floor(ys.length * lo)], ys[Math.min(ys.length - 1, Math.floor(ys.length * hi))]];
+}
+
 // wrap `object` so it lies flat, scaled to `targetDiameter`, bottom at y=0.
 // Returns null for degenerate input — a zero/NaN-sized collider panics the
 // rapier WASM and poisons the whole world ("recursive use of an object").
@@ -36,11 +56,16 @@ function prep(object, rotDeg, targetDiameter) {
   const wrapper = new THREE.Group();
   wrapper.add(inner);
   inner.scale.setScalar(s);
-  inner.position.set(-center.x * s, -_box.min.y * s, -center.z * s);
+  inner.position.set(-center.x * s, 0, -center.z * s);
+  // ground the BULK of the wheel (2nd percentile), not stray protrusions
+  const [y2, y98] = yPercentiles(wrapper, 0.02, 0.98);
+  inner.position.y = -y2;
+  const height = y98 - y2;
+  if (!isFinite(height) || height < 0.02) return null;
   wrapper.traverse((o) => {
     if (o.isMesh) o.castShadow = true;
   });
-  return { object: wrapper, radius: targetDiameter / 2, height: size.y * s };
+  return { object: wrapper, radius: targetDiameter / 2, height };
 }
 
 // Bake a mesh's world transform into plain float geometry. Sidesteps the
@@ -268,14 +293,18 @@ function TrafficCone({ cone, position, yaw = 0, register }) {
   );
 }
 
-const CONES = [
-  [6, 20, 0.4],
-  [8, 22, 1.7],
+// mini slalom course on the west lane (x = -38 centerline, z 22 → -22):
+// weave the cones, wheel-stack gates mark start and finish
+const SLALOM_CONES = [
+  [-38, 14, 0.4],
+  [-38, 6, 1.7],
+  [-38, -2, 0.2],
+  [-38, -10, 2.4],
+  [-38, -18, 1.1],
+];
+const STRAY_CONES = [
   [26, -6, 0.2],
   [28, -12, 2.4],
-  [24, -14, 1.1],
-  [-22, -14, 0.8],
-  [-24, 8, 2.0],
 ];
 
 export default function Decorations({ register }) {
@@ -283,15 +312,19 @@ export default function Decorations({ register }) {
   const cone = useConeDeco();
   return (
     <>
-      {CONES.map(([x, z, yaw]) => (
+      {[...SLALOM_CONES, ...STRAY_CONES].map(([x, z, yaw]) => (
         <TrafficCone key={`${x},${z}`} cone={cone} position={[x, z]} yaw={yaw} register={register} />
       ))}
+
+      {/* course gates */}
+      <WheelStack wheels={wheels} position={[-33.5, 0, 22]} count={2} variant={1} yaw={0.3} register={register} />
+      <WheelStack wheels={wheels} position={[-42.5, 0, 22]} count={2} variant={0} yaw={1.2} register={register} />
+      <WheelStack wheels={wheels} position={[-33.5, 0, -22]} count={2} variant={0} yaw={2.1} register={register} />
+      <WheelStack wheels={wheels} position={[-42.5, 0, -22]} count={2} variant={1} yaw={0.7} register={register} />
+
+      {/* toys near the spawn */}
       <WheelStack wheels={wheels} position={[7, 0, 12]} count={1} variant={0} yaw={0.6} register={register} />
       <WheelStack wheels={wheels} position={[-7, 0, 13]} count={2} variant={1} yaw={1.9} register={register} />
-      <WheelStack wheels={wheels} position={[-26, 0, 20]} count={2} variant={1} yaw={0.3} register={register} />
-      <WheelStack wheels={wheels} position={[-23, 0, 21]} count={1} variant={0} yaw={1.2} register={register} />
-      <WheelStack wheels={wheels} position={[30, 0, 16]} count={2} variant={0} yaw={2.1} register={register} />
-      <WheelStack wheels={wheels} position={[-18, 0, -24]} count={3} variant={1} yaw={0.7} register={register} />
     </>
   );
 }

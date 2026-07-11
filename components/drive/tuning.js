@@ -10,13 +10,13 @@ export const TUNING = {
   rollingResist: 1.4,
 
   // steering
-  steerRate: 2.4, // rad/s at full authority
+  steerRate: 3.6, // rad/s at full authority
   fullSteerSpeed: 3.5, // m/s at which steering reaches full authority
-  steerFalloff: 0.02, // authority ÷ (1 + falloff·|v|)
+  steerFalloff: 0.012, // authority ÷ (1 + falloff·|v|)
 
   // grip (velocity-direction rotation toward heading, per second)
   grip: 6.5,
-  driftGrip: 1.4,
+  driftGrip: 2.6, // handbrake: some slide, not a skating rink
   handbrakeDecel: 4,
   slipScrub: 0.5, // × |sin slip| × speed → sliding sideways burns speed
 

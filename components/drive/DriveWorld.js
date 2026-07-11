@@ -64,9 +64,31 @@ function makeGroundTexture() {
   g.lineWidth = 0.25 * m;
   for (const z of [4, -4]) {
     g.beginPath();
-    g.moveTo(X(-40), Z(z));
+    g.moveTo(X(-28), Z(z));
     g.lineTo(X(40), Z(z));
     g.stroke();
+  }
+
+  // mini slalom course on the west side: dashed lane borders + start/finish
+  g.strokeStyle = "rgba(207, 185, 145, 0.22)";
+  g.lineWidth = 0.3 * m;
+  g.setLineDash([2.2 * m, 1.6 * m]);
+  for (const x of [-33.5, -42.5]) {
+    g.beginPath();
+    g.moveTo(X(x), Z(24));
+    g.lineTo(X(x), Z(-24));
+    g.stroke();
+  }
+  g.setLineDash([]);
+  const laneSq = 9 / 7; // 7 checker squares across the 9 m lane
+  for (const z of [22, -22]) {
+    for (let row = 0; row < 2; row++) {
+      for (let i = 0; i < 7; i++) {
+        if ((i + row) % 2) continue;
+        g.fillStyle = "rgba(242, 238, 230, 0.7)";
+        g.fillRect(X(-42.5 + i * laneSq), Z(z) + row * 0.9 * m, laneSq * m, 0.9 * m);
+      }
+    }
   }
 
   const tex = new THREE.CanvasTexture(c);
