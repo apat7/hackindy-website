@@ -111,8 +111,9 @@ body {
   background: #e6d8b4;
 }
 
-/* touch feedback — mirror the hover fill on press */
-.btn-plate:active > span {
+/* touch feedback — mirror the hover fill on press (not the email form:
+   tapping into its input shouldn't flash the whole plate gold) */
+.btn-plate:not(.btn-plate--form):active > span {
   background: var(--color-gold);
   color: var(--color-coal);
 }
