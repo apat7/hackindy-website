@@ -6,6 +6,7 @@ import {
   ContactShadows,
   Environment,
   OrbitControls,
+  useCursor,
   useGLTF,
 } from "@react-three/drei";
 import * as THREE from "three";
@@ -23,11 +24,14 @@ const LAP_END = 2.4;
 
 const easeOutCubic = (u) => 1 - (1 - u) ** 3;
 
-function IndyCar({ reduceMotion }) {
+function IndyCar({ reduceMotion, onEnter }) {
   const { scene } = useGLTF("/indycar.glb");
   const livery = useMemo(makeLivery, []);
   const groupRef = useRef();
   const lapStart = useRef(null);
+  const downPos = useRef(null);
+  const [hovered, setHovered] = useState(false);
+  useCursor(hovered && !!onEnter);
 
   const startLap = () => {
     if (lapStart.current !== null || reduceMotion) return;
@@ -78,17 +82,30 @@ function IndyCar({ reduceMotion }) {
     };
   }, [scene, livery]);
 
+  // fit transform lives on a wrapper group — putting scale/position props on
+  // <primitive> would mutate the drei-cached scene, corrupting the fit math
+  // on remount (and any other consumer of the cached glb)
   return (
     <group ref={groupRef} rotation={[0, PARK_YAW, 0]}>
-      <primitive
-        object={scene}
-        scale={scale}
-        position={position}
-        onDoubleClick={(e) => {
-          e.stopPropagation();
-          startLap();
-        }}
-      />
+      <group scale={scale} position={position}>
+        <primitive
+          object={scene}
+          onPointerDown={(e) => {
+            downPos.current = { x: e.nativeEvent.clientX, y: e.nativeEvent.clientY };
+          }}
+          onClick={(e) => {
+            if (!onEnter || !downPos.current) return;
+            const dx = e.nativeEvent.clientX - downPos.current.x;
+            const dy = e.nativeEvent.clientY - downPos.current.y;
+            if (dx * dx + dy * dy > 64) return; // that was an orbit drag
+            e.stopPropagation();
+            startLap(); // self-skips under reduced motion; overlay fades in over the launch
+            onEnter();
+          }}
+          onPointerOver={() => setHovered(true)}
+          onPointerOut={() => setHovered(false)}
+        />
+      </group>
     </group>
   );
 }
@@ -107,7 +124,7 @@ function CameraRig() {
   return null;
 }
 
-export default function IndyCarCanvas({ className = "" }) {
+export default function IndyCarCanvas({ className = "", onEnterDrive }) {
   const [autoRotate, setAutoRotate] = useState(true);
   const reduceMotion = useMediaQuery("(prefers-reduced-motion: reduce)");
 
@@ -126,7 +143,7 @@ export default function IndyCarCanvas({ className = "" }) {
         <directionalLight position={[0, 2, -6]} intensity={0.8} />
         <Suspense fallback={null}>
           <Environment files="/night_sky.hdr" />
-          <IndyCar reduceMotion={reduceMotion} />
+          <IndyCar reduceMotion={reduceMotion} onEnter={onEnterDrive} />
         </Suspense>
         <ContactShadows
           position={[0, 0, 0]}
