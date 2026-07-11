@@ -167,6 +167,9 @@ export default function DriveCar({ telemetry, resetSignal, register }) {
     t.slip = s.slip;
     t.handbrake = input.handbrake;
     t.burnout = burnout;
+    // traction-limited launch: full throttle faster than the tires can hook
+    // up — ends by itself once speed catches the engine
+    t.wheelspin = input.throttle > 0 && Math.abs(s.speed) < T.wheelspinSpeed;
     const bx = s.x - fx * fit.rearAxle;
     const bz = s.z - fz * fit.rearAxle;
     t.rl = { x: bx - fz * fit.halfTrack, z: bz + fx * fit.halfTrack };

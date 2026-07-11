@@ -113,6 +113,7 @@ export default function DriveMode({ onExit, onCovered, reduceMotion }) {
     slip: 0,
     handbrake: false,
     burnout: false,
+    wheelspin: false,
     rl: { x: 0, z: 0 },
     rr: { x: 0, z: 0 },
   });

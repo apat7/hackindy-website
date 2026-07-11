@@ -16,6 +16,8 @@ const FIELDS = [
   ["driftGrip", 0.5, 6, 0.1],
   ["slipScrub", 0, 2, 0.05],
   ["handbrakeDecel", 0, 12, 0.5],
+  ["slipForSkid", 1, 12, 0.5],
+  ["wheelspinSpeed", 0, 20, 0.5],
   ["camLerp", 1, 12, 0.5],
   ["fovBase", 40, 70, 1],
   ["fovSpan", 0, 30, 1],

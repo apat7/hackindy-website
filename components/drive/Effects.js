@@ -40,7 +40,8 @@ export function TireSmoke({ telemetry, reduceMotion }) {
     if (!ref.current) return;
     const dt = Math.min(rawDt, 1 / 30);
     const t = telemetry.current;
-    const emitting = !reduceMotion && (t.slip > T.slipForSmoke || t.burnout);
+    const emitting =
+      !reduceMotion && (t.slip > T.slipForSmoke || t.burnout || t.wheelspin);
     if (emitting) {
       pool.acc += dt * 90;
       while (pool.acc >= 1) {
@@ -105,7 +106,10 @@ export function SkidMarks({ telemetry }) {
 
   useFrame(() => {
     const t = telemetry.current;
-    const sliding = t.slip > T.slipForSkid && Math.abs(t.speed) > 1.5;
+    // marks only while the tires are genuinely overwhelmed: a proper slide,
+    // or a wheelspinning launch (which ends as soon as traction returns)
+    const sliding =
+      (t.slip > T.slipForSkid || t.wheelspin) && Math.abs(t.speed) > 0.3;
     const attr = geo.attributes.position;
     for (const key of ["rl", "rr"]) {
       const cur = t[key];

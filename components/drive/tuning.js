@@ -35,9 +35,11 @@ export const TUNING = {
   blurSpeed: 17, // m/s at which rim-blur discs appear
   maxVisualSteer: 0.42, // rad, front-wheel yaw
 
-  // effects
-  slipForSmoke: 3.2,
-  slipForSkid: 2.4,
+  // effects — tires only mark/smoke when actually overwhelmed:
+  // hard lateral slip, or full throttle below the traction speed
+  slipForSmoke: 4.5,
+  slipForSkid: 5,
+  wheelspinSpeed: 9, // m/s under which full throttle spins the rears
 
   // dynamic props
   letterDensity: 0.4,
