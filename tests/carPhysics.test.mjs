@@ -81,7 +81,7 @@ test("steers mid-slide when velocity is mostly lateral", () => {
   assert.ok(yawBefore - s.yaw > 0.15, `counter-steer yaw delta ${yawBefore - s.yaw}`);
 });
 
-test("drift bleeds slip back into forward speed", () => {
+test("drift carries momentum into the exit", () => {
   let s = run(createCarState(0, 0, 0), { throttle: 1 }, 3);
   const before = Math.hypot(s.vx, s.vz);
   s = run(s, { steer: 1, handbrake: true }, 0.7); // throw it sideways
@@ -89,6 +89,29 @@ test("drift bleeds slip back into forward speed", () => {
   const after = Math.hypot(s.vx, s.vz);
   assert.ok(after > before * 0.4, `speed after drift ${after} vs before ${before}`);
   assert.ok(s.speed > 3, `forward speed after hook-up ${s.speed}`);
+});
+
+test("never gains speed with the throttle released", () => {
+  let s = run(createCarState(0, 0, 0), { throttle: 1 }, 3);
+  let max = Math.hypot(s.vx, s.vz);
+  // wiggle hard, tap handbrake — nothing should pump energy into the car
+  const moves = [
+    { steer: 1 }, { steer: -1 }, { steer: 1, handbrake: true },
+    { steer: -1 }, { steer: 1 }, { steer: -1, handbrake: true },
+  ];
+  for (const input of moves) {
+    s = run(s, input, 0.5);
+    const v = Math.hypot(s.vx, s.vz);
+    assert.ok(v <= max + 0.01, `speed grew to ${v} (max seen ${max})`);
+    max = Math.max(max, v);
+  }
+});
+
+test("reverse is much slower than forward", () => {
+  const fwd = run(createCarState(0, 0, 0), { throttle: 1 }, 20);
+  let rev = run(createCarState(0, 0, 0), { brake: 1 }, 20);
+  assert.ok(Math.abs(rev.speed) <= T.maxReverse + 0.01, `reverse ${rev.speed}`);
+  assert.ok(Math.abs(rev.speed) < fwd.speed * 0.3, `reverse ${rev.speed} vs fwd ${fwd.speed}`);
 });
 
 test("roughly framerate independent", () => {

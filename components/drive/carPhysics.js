@@ -1,8 +1,12 @@
 // Pure arcade car model. No three.js, no react — unit-testable in node.
 // Heading: forward = (sin yaw, cos yaw) in the xz-plane (matches the teaser).
-// The trick that makes it fun: velocity is decomposed into forward/lateral
-// components each frame; lateral velocity bleeds away at "grip" rate. The
-// handbrake drops grip so the rear stays loose — slides and donuts fall out.
+//
+// The core of the model is the standard arcade grip trick done right:
+// each step, the velocity VECTOR is rotated toward the car's heading at the
+// grip rate. Momentum is redirected, never created — sliding sideways keeps
+// your speed (minus tire scrub) and hooking up converts it into forward
+// motion for free, but nothing can pump energy into the car. The handbrake
+// simply lowers the grip rate so the slide persists.
 
 export function createCarState(x = 0, z = 0, yaw = 0) {
   return { x, z, yaw, vx: 0, vz: 0, speed: 0, slip: 0, yawRate: 0 };
@@ -11,50 +15,78 @@ export function createCarState(x = 0, z = 0, yaw = 0) {
 export function stepCar(state, input, dt, T) {
   const fx = Math.sin(state.yaw);
   const fz = Math.cos(state.yaw);
-  // decompose world velocity onto heading; right vector = (fz, -fx)
-  let vF = state.vx * fx + state.vz * fz;
-  let vL = state.vx * fz - state.vz * fx;
+  let vx = state.vx;
+  let vz = state.vz;
+  let vF = vx * fx + vz * fz;
 
+  // engine and brake act along the heading
   if (input.throttle > 0 && vF < T.maxSpeed) {
-    vF += T.engineAccel * input.throttle * (1 - Math.max(vF, 0) / T.maxSpeed) * dt;
+    const a = T.engineAccel * input.throttle * (1 - Math.max(vF, 0) / T.maxSpeed) * dt;
+    vx += fx * a;
+    vz += fz * a;
   }
   if (input.brake > 0) {
-    vF =
-      vF > 0.25
-        ? Math.max(0, vF - T.brakeDecel * input.brake * dt)
-        : Math.max(-T.maxReverse, vF - T.reverseAccel * input.brake * dt);
+    if (vF > 0.25) {
+      const a = Math.min(T.brakeDecel * input.brake * dt, vF); // brake to zero, not past it
+      vx -= fx * a;
+      vz -= fz * a;
+    } else {
+      const headroom = vF + T.maxReverse; // how much reverse speed is left
+      const a = Math.min(T.reverseAccel * input.brake * dt, Math.max(headroom, 0));
+      vx -= fx * a;
+      vz -= fz * a;
+    }
   }
-  if (input.handbrake) {
-    vF -= Math.sign(vF) * Math.min(Math.abs(vF), T.handbrakeDecel * dt);
-  }
-  const resist = (T.rollingResist + T.drag * Math.abs(vF)) * dt;
-  vF -= Math.sign(vF) * Math.min(Math.abs(vF), resist);
+  vF = vx * fx + vz * fz;
+  let speed = Math.hypot(vx, vz);
 
-  // steering authority ramps in with PLANAR speed (forward + lateral), not
-  // just forward speed: mid-drift the velocity is mostly lateral and the car
-  // must stay steerable without touching the throttle. Mirrors only when
-  // solidly reversing.
-  const planar = Math.hypot(vF, vL);
+  // steering authority ramps in with planar speed (mid-drift the velocity is
+  // mostly lateral and the car must stay steerable) and falls off at the top
+  // end. Steering only mirrors when deliberately reversing under brake — a
+  // car sliding backwards mid-spin must still counter-steer normally.
   const authority =
-    Math.min(planar / T.fullSteerSpeed, 1) / (1 + T.steerFalloff * planar);
-  const yawRate = input.steer * T.steerRate * authority * (vF < -0.5 ? -1 : 1);
+    Math.min(speed / T.fullSteerSpeed, 1) / (1 + T.steerFalloff * speed);
+  const reversing = vF < -0.5 && input.brake > 0;
+  const yawRate = input.steer * T.steerRate * authority * (reversing ? -1 : 1);
   const yaw = state.yaw + yawRate * dt;
 
-  // grip bleeds lateral velocity — but the tires hooking up should convert
-  // that momentum into forward drive, not delete it, or every drift exit
-  // feels dead until the throttle rebuilds speed from zero
-  const grip = input.handbrake ? T.driftGrip : T.grip;
-  const vLBefore = Math.abs(vL);
-  vL *= Math.exp(-grip * dt);
-  vF += (vLBefore - Math.abs(vL)) * T.slipTransfer * (vF < -0.5 ? -1 : 1);
-  if (vF > T.maxSpeed) vF = T.maxSpeed;
+  const nfx = Math.sin(yaw);
+  const nfz = Math.cos(yaw);
+  let slip = 0;
 
-  // reassemble against the OLD heading: the velocity vector must not rotate
-  // with the car — next frame's decomposition against the new heading is what
-  // turns heading change into lateral slip, which grip then bleeds into the
-  // turn. Reassembling on the new heading would corner on rails (slip ≡ 0).
-  const vx = fx * vF + fz * vL;
-  const vz = fz * vF - fx * vL;
+  if (speed > 0.01) {
+    const sign = vF >= 0 ? 1 : -1;
+    const tx = nfx * sign; // where the tires want the velocity to point
+    const tz = nfz * sign;
+    const dx = vx / speed;
+    const dz = vz / speed;
+    const cross = Math.abs(dx * tz - dz * tx); // |sin(slip angle)|
+    slip = cross * speed;
+
+    // rotate the velocity direction toward the heading at the grip rate
+    const grip = input.handbrake ? T.driftGrip : T.grip;
+    const k = 1 - Math.exp(-grip * dt);
+    let rx = dx + (tx - dx) * k;
+    let rz = dz + (tz - dz) * k;
+    const rlen = Math.hypot(rx, rz) || 1;
+    rx /= rlen;
+    rz /= rlen;
+
+    // losses: rolling + aero, tire scrub while sliding, handbrake drag
+    const decel =
+      (T.rollingResist +
+        T.drag * speed +
+        T.slipScrub * cross * speed +
+        (input.handbrake ? T.handbrakeDecel : 0)) *
+      dt;
+    speed = Math.max(0, speed - decel);
+    vx = rx * speed;
+    vz = rz * speed;
+  } else {
+    vx = 0;
+    vz = 0;
+    speed = 0;
+  }
 
   return {
     x: state.x + vx * dt,
@@ -62,8 +94,8 @@ export function stepCar(state, input, dt, T) {
     yaw,
     vx,
     vz,
-    speed: vF,
-    slip: Math.abs(vL),
+    speed: vx * nfx + vz * nfz, // signed forward component
+    slip,
     yawRate,
   };
 }

@@ -15,7 +15,7 @@ const WHEEL_ROTATIONS = [
   [134, 90],
   [137, 90],
 ];
-const WHEEL_DIAMETER = 1.05;
+const WHEEL_DIAMETER = 1.35;
 const CONE_HEIGHT = 0.85;
 
 // wrap `object` so it lies flat, scaled to `targetDiameter`, bottom at y=0.

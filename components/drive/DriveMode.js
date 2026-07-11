@@ -5,7 +5,7 @@ import { Canvas } from "@react-three/fiber";
 import { Environment } from "@react-three/drei";
 import { Physics } from "@react-three/rapier";
 import DriveWorld from "./DriveWorld";
-import DriveCar, { ChaseCamera, SPAWN } from "./DriveCar";
+import DriveCar, { FollowCamera, SPAWN } from "./DriveCar";
 import { TireSmoke, SkidMarks } from "./Effects";
 
 // Mounts only once Suspense inside the Canvas has resolved — signals "world ready".
@@ -172,7 +172,7 @@ export default function DriveMode({ onExit, onCovered, reduceMotion }) {
       <Canvas
         shadows
         dpr={[1, 2]}
-        camera={{ position: [0, 3.2, 26], fov: 55 }}
+        camera={{ position: [0, 9, 29], fov: 55 }}
         gl={{ antialias: true }}
         onCreated={({ gl }) => {
           gl.domElement.addEventListener("webglcontextlost", (e) => {
@@ -206,7 +206,7 @@ export default function DriveMode({ onExit, onCovered, reduceMotion }) {
             <TireSmoke telemetry={telemetry} reduceMotion={reduceMotion} />
             <SkidMarks telemetry={telemetry} />
           </Physics>
-          <ChaseCamera telemetry={telemetry} shake={shake} reduceMotion={reduceMotion} />
+          <FollowCamera telemetry={telemetry} shake={shake} reduceMotion={reduceMotion} />
           <SceneReady onReady={() => setReady(true)} />
         </Suspense>
       </Canvas>

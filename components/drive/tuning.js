@@ -2,10 +2,10 @@
 export const TUNING = {
   // engine & brakes (m/s, m/s²)
   maxSpeed: 32,
-  maxReverse: 9,
+  maxReverse: 6,
   engineAccel: 26,
   brakeDecel: 42,
-  reverseAccel: 12,
+  reverseAccel: 8,
   drag: 0.045, // × |v| → aero decel
   rollingResist: 1.4,
 
@@ -14,16 +14,14 @@ export const TUNING = {
   fullSteerSpeed: 3.5, // m/s at which steering reaches full authority
   steerFalloff: 0.02, // authority ÷ (1 + falloff·|v|)
 
-  // grip (lateral velocity decay, per second)
+  // grip (velocity-direction rotation toward heading, per second)
   grip: 6.5,
   driftGrip: 1.4,
-  handbrakeDecel: 8,
-  slipTransfer: 0.7, // fraction of bled lateral speed returned as forward drive
+  handbrakeDecel: 4,
+  slipScrub: 0.5, // × |sin slip| × speed → sliding sideways burns speed
 
-  // camera
-  camDist: 8,
-  camHeight: 3.2,
-  camLookAhead: 5,
+  // camera — fixed world-space offset from the car (follows position only)
+  camOffset: [0, 9, 13],
   camLerp: 4.5,
   fovBase: 55,
   fovSpan: 14,

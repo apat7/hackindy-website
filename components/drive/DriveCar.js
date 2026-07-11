@@ -14,24 +14,28 @@ export const SPAWN = { x: 0, z: 16, yaw: Math.PI }; // facing the letter row at 
 const Y_AXIS = new THREE.Vector3(0, 1, 0);
 const _box = new THREE.Box3();
 
-// The glb has per-corner group nodes (WHEEL_LF/RF/LR/RR) holding tire, rim,
-// brake disc, and blur discs — but with identity transforms (geometry baked in
-// model space), so each gets re-parented under a pivot at its own center.
+// The glb has per-corner group nodes (WHEEL_LF/RF/LR/RR), but their ancestor
+// chain (Sketchfab_model → …fbx) carries baked matrix transforms — so a
+// wheel's world-space center is NOT its parent-local position. Each pivot is
+// therefore created at ROOT level at the wheel's root-space center, and the
+// wheel is moved under it with attach(), which preserves the world pose and
+// computes the correct local offset whatever the ancestor transforms are.
 // Pivot rotation order YXZ: y = steer, then x = spin.
 function buildWheelRig(root) {
+  root.updateMatrixWorld(true);
   const pivots = [];
   let radius = 0.5;
   for (const name of ["WHEEL_LF", "WHEEL_RF", "WHEEL_LR", "WHEEL_RR"]) {
     const node = root.getObjectByName(name);
     if (!node) continue;
     _box.setFromObject(node);
-    const c = _box.getCenter(new THREE.Vector3());
+    const c = _box.getCenter(new THREE.Vector3()); // root space (root is identity)
     const pivot = new THREE.Group();
-    pivot.position.copy(c);
     pivot.rotation.order = "YXZ";
-    node.parent.add(pivot);
-    pivot.add(node);
-    node.position.sub(c);
+    pivot.position.copy(c);
+    root.add(pivot);
+    pivot.updateMatrixWorld(true);
+    pivot.attach(node);
     pivots.push({ pivot, front: /F$/.test(name), z: c.z });
     radius = (_box.max.y - _box.min.y) / 2;
   }
@@ -193,14 +197,18 @@ export default function DriveCar({ telemetry, resetSignal, register }) {
 const _camTarget = new THREE.Vector3();
 const _lookTarget = new THREE.Vector3();
 
-export function ChaseCamera({ telemetry, shake, reduceMotion }) {
+// Fixed-angle follow camera: a constant world-space offset tracks the car's
+// position (smoothed) but never rotates with it — the world stays oriented
+// and drifts/spins read clearly.
+export function FollowCamera({ telemetry, shake, reduceMotion }) {
   const pos = useRef(null);
   const look = useRef(new THREE.Vector3(0, 1, 0));
 
   useFrame(({ camera }, rawDt) => {
     const dt = Math.min(rawDt, 1 / 30);
     const t = telemetry.current;
-    _camTarget.set(t.x - t.fx * T.camDist, T.camHeight, t.z - t.fz * T.camDist);
+    const [ox, oy, oz] = T.camOffset;
+    _camTarget.set(t.x + ox, oy, t.z + oz);
     if (!pos.current) pos.current = _camTarget.clone();
     const a = 1 - Math.exp(-T.camLerp * dt);
     pos.current.lerp(_camTarget, a);
@@ -210,7 +218,7 @@ export function ChaseCamera({ telemetry, shake, reduceMotion }) {
       camera.position.y += (Math.random() - 0.5) * shake.current * 0.6;
       shake.current *= Math.exp(-T.camShakeDecay * dt);
     }
-    _lookTarget.set(t.x + t.fx * T.camLookAhead, 1.1, t.z + t.fz * T.camLookAhead);
+    _lookTarget.set(t.x, 0.9, t.z);
     look.current.lerp(_lookTarget, a);
     camera.lookAt(look.current);
     const fov = T.fovBase + T.fovSpan * Math.min(Math.abs(t.speed) / T.maxSpeed, 1);
