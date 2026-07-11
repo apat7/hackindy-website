@@ -1,98 +1,36 @@
-# Hack Indy 2026 Website
+This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://github.com/vercel/next.js/tree/canary/packages/create-next-app).
 
-The official website for **Hack Indy 2026** — Purdue University Indianapolis' largest student-run hackathon.
+## Getting Started
 
-![Next.js](https://img.shields.io/badge/Next.js-15.5-black?logo=next.js)
-![TypeScript](https://img.shields.io/badge/TypeScript-5-blue?logo=typescript)
-![TailwindCSS](https://img.shields.io/badge/TailwindCSS-4-06B6D4?logo=tailwindcss)
-
-## 🏁 About
-
-Hack Indy brings together 200+ students from all majors for a three-day overnight hackathon featuring:
-
-- **Industry Workshops** — Learn from top tech companies
-- **Engineering Panels** — Network with Indianapolis tech executives  
-- **$5,000+ in Prizes** — Compete for exciting rewards
-- **Video Game Tournaments** — Have fun between hacking sessions
-- **Free Food & Swag** — All meals included
-
-**Event Date:** March 27-29, 2026  
-**Location:** Purdue University Indianapolis Student Center
-
-## 🏎️ Design
-
-The website features a **retro racing theme** inspired by the Indianapolis 500, including:
-
-- Racing-inspired typography with pixelated fonts
-- Animated start lights and checkered flags
-- Horizontal timeline schedule styled as a race track
-- "Pit Stop Intel" FAQ section with radio transmission aesthetics
-- "Sponsors Garage" with decorative racing elements
-- Interactive Purdue logo sticker with peel effect
-- Scanline overlays and racing grid backgrounds
-
-## 🚀 Getting Started
-
-### Prerequisites
-
-- Node.js 18+
-- npm or yarn
-
-### Installation
+First, run the development server:
 
 ```bash
-# Install dependencies
-npm install
-
-# Run development server
 npm run dev
+# or
+yarn dev
+# or
+pnpm dev
+# or
+bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) to view the site.
+Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
 
-### Build for Production
+You can start editing the page by modifying `app/page.js`. The page auto-updates as you edit the file.
 
-```bash
-npm run build
-npm start
-```
+This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
 
-## 📁 Project Structure
+## Learn More
 
-```
-src/
-├── app/
-│   ├── page.tsx        # Main page entry
-│   ├── layout.tsx      # Root layout with metadata
-│   ├── globals.css     # Global styles & racing theme
-│   ├── Icons.tsx       # Custom SVG icon components
-│   └── team/           # Team page
-├── components/
-│   ├── LandingPage.tsx # Main landing page component
-│   └── FaultyTerminal.tsx # Animated background effect
-└── lib/
-    └── utils.ts        # Utility functions
-```
+To learn more about Next.js, take a look at the following resources:
 
-## 🛠️ Tech Stack
+- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
+- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
 
-- **Framework:** Next.js 15.5 (App Router)
-- **Language:** TypeScript
-- **Styling:** TailwindCSS 4 + Custom CSS
-- **Animations:** GSAP, CSS Keyframes
-- **Components:** Custom SVG icons, Interactive sticker peel
+You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
 
-## 📸 Features
+## Deploy on Vercel
 
-- **Responsive Design** — Works on all devices
-- **SEO Optimized** — Server-side rendering with metadata
-- **Accessible** — Semantic HTML and keyboard navigation
-- **Performance** — Optimized images and lazy loading
-- **Easter Eggs** — Hidden Purdue-themed surprises
+The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
 
-## 🤝 Contributing
-
-This project is maintained by the Purdue Indy CS Club. For questions or to get involved, reach out through our official channels.
-(made by apat7)
-
-**Start Your Engines 🏁**
+Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.

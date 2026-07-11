@@ -3,10 +3,10 @@
 import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import dynamic from 'next/dynamic';
-import { Icons } from '@/app/Icons';
-import StickerPeel from '@/app/StickerPeel';
+import { Icons } from '@/components-2026/Icons';
+import StickerPeel from '@/components-2026/StickerPeel';
 
-const FaultyTerminal = dynamic(() => import('@/components/FaultyTerminal'), {
+const FaultyTerminal = dynamic(() => import('@/components-2026/FaultyTerminal'), {
   ssr: false,
 });
 
@@ -427,7 +427,7 @@ export default function Archive2026() {
       {/* Interactive Purdue Logo Sticker - hidden on mobile */}
       <div className="sticker-bounds-container hide-on-mobile">
         <StickerPeel
-          imageSrc="/Purdue Boilermakers Logo.png"
+          imageSrc="/2026/Purdue Boilermakers Logo.png"
           width={180}
           rotate={15}
           peelBackHoverPct={25}
@@ -508,7 +508,7 @@ export default function Archive2026() {
                 </a>
               ))}
               <Link
-                href="/team"
+                href="/2026/team"
                 className="text-sm font-medium transition-colors duration-300 hover:text-[var(--racing-gold)]"
                 style={{ color: 'var(--text-secondary)' }}
               >
@@ -555,7 +555,7 @@ export default function Archive2026() {
               </a>
             ))}
             <Link
-              href="/team"
+              href="/2026/team"
               className="mobile-menu-link"
               onClick={() => setMobileMenuOpen(false)}
             >
@@ -887,7 +887,7 @@ export default function Archive2026() {
                 <h3 className="text-center font-racing text-2xl mb-2" style={{ color: 'var(--text-primary)' }}>Opt-In Sponsor Prize</h3>
                 <p className="text-center text-sm mb-8" style={{ color: 'var(--text-secondary)' }}>Use Featherless AI in your project to be eligible</p>
                 <div className="racing-card corner-accent p-6 md:p-8 flex flex-col md:flex-row items-center md:items-start gap-6 hover:border-[var(--racing-gold)] transition-colors duration-300" style={{ borderColor: 'var(--border-gold)' }}>
-                  <img src="/sponsors/Featherless Hackathon Assets.png" alt="Featherless AI" className="w-24 h-24 object-contain shrink-0" />
+                  <img src="/2026/sponsors/Featherless Hackathon Assets.png" alt="Featherless AI" className="w-24 h-24 object-contain shrink-0" />
                   <div className="flex-1 text-center md:text-left">
                     <p className="text-xs uppercase tracking-widest font-mono mb-1" style={{ color: 'var(--text-muted)' }}>Opt-In Sponsor Prize</p>
                     <h4 className="font-racing text-xl mb-3" style={{ color: 'var(--text-primary)' }}>Featherless AI Credits</h4>
@@ -1200,14 +1200,14 @@ export default function Archive2026() {
                       className="w-full h-full flex items-center justify-center transition-opacity hover:opacity-80"
                     >
                       <img
-                        src={`/sponsors/${sponsor.logo}`}
+                        src={`/2026/sponsors/${sponsor.logo}`}
                         alt={sponsor.name}
                         className="max-w-full max-h-full object-contain"
                       />
                     </a>
                   ) : (
                     <img
-                      src={`/sponsors/${sponsor.logo}`}
+                      src={`/2026/sponsors/${sponsor.logo}`}
                       alt={sponsor.name}
                       className="max-w-full max-h-full object-contain"
                     />

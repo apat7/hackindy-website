@@ -2,7 +2,7 @@
 
 import { useEffect } from 'react';
 import Link from 'next/link';
-import { Icons } from '../Icons';
+import { Icons } from '@/components-2026/Icons';
 
 export default function TeamPage() {
   // Scroll animation observer
@@ -33,7 +33,7 @@ export default function TeamPage() {
       interests: "Swimming, Chess, Netflix",
       email: "ojanaman@purdue.edu",
       linkedin: "https://www.linkedin.com/in/omjanamanchi/",
-      image: "/team/om-janamanchi.jpg"
+      image: "/2026/team/om-janamanchi.jpg"
     },
     {
       name: "Abha Gupta",
@@ -42,7 +42,7 @@ export default function TeamPage() {
       interests: "Leadership, Technology, Innovation",
       email: "gupt1107@purdue.edu",
       linkedin: "https://www.linkedin.com/in/abha-gupta-a26a2625b/",
-      image: "/team/abha-gupta.jpg"
+      image: "/2026/team/abha-gupta.jpg"
     },
     {
       name: "Emily Zheng",
@@ -51,7 +51,7 @@ export default function TeamPage() {
       interests: "Video Games (Stardew, Hollow Knight) & arts, music",
       email: "zheng849@purdue.edu",
       linkedin: "https://www.linkedin.com/in/emily-zheng-054890338/",
-      image: "/team/emily-zheng.jpg"
+      image: "/2026/team/emily-zheng.jpg"
     },
     {
       name: "Ashwati Palanivel",
@@ -60,7 +60,7 @@ export default function TeamPage() {
       interests: "Crocheting and Movies!",
       email: "palaniv1@purdue.edu",
       linkedin: "https://www.linkedin.com/in/ashwatipalanivel/",
-      image: "/team/ashwati-palanivel.jpg"
+      image: "/2026/team/ashwati-palanivel.jpg"
     },
     {
       name: "Ruthu Shankar",
@@ -69,7 +69,7 @@ export default function TeamPage() {
       interests: "Cooking, Cycling, Dancing",
       email: "shanka61@purdue.edu",
       linkedin: "https://www.linkedin.com/in/shankarruthu/",
-      image: "/team/ruthu-shankar.jpg"
+      image: "/2026/team/ruthu-shankar.jpg"
     },
     {
       name: "Shely Dash",
@@ -78,7 +78,7 @@ export default function TeamPage() {
       interests: "Community Building, Technology",
       email: "sdash@purdue.edu",
       linkedin: "https://www.linkedin.com/in/shely-dash0712/",
-      image: "/team/shely-dash.jpg"
+      image: "/2026/team/shely-dash.jpg"
     },
     {
       name: "Hana Zoaib",
@@ -87,7 +87,7 @@ export default function TeamPage() {
       interests: "Gym and reading",
       email: "hzoaib@purdue.edu",
       linkedin: "https://www.linkedin.com/in/hana-zoaib-7233b4345/",
-      image: "/team/hana-zoaib.jpg"
+      image: "/2026/team/hana-zoaib.jpg"
     },
     {
       name: "Oluwatomi Oladunni",
@@ -96,7 +96,7 @@ export default function TeamPage() {
       interests: "Reading, Playing FIFA, Cooking, and Entrepreneurship",
       email: "ooladunn@purdue.edu",
       linkedin: "https://www.linkedin.com/in/oluwatomi-oladunni-685708214/",
-      image: "/team/oluwatomi-oladunni.jpg"
+      image: "/2026/team/oluwatomi-oladunni.jpg"
     },
     {
       name: "Richin Mrudul",
@@ -105,7 +105,7 @@ export default function TeamPage() {
       interests: "Sacramento Kings, Gym, Cooking, Music",
       email: "rmrudul@purdue.edu",
       linkedin: "https://www.linkedin.com/in/richinmrudul/",
-      image: "/team/richin-mrudul.jpg"
+      image: "/2026/team/richin-mrudul.jpg"
     },
     {
       name: "Aditya Raj Pundir",
@@ -114,7 +114,7 @@ export default function TeamPage() {
       interests: "Technology, Leadership",
       email: "apundir@purdue.edu",
       linkedin: "https://www.linkedin.com/in/aditya-raj-pundir/",
-      image: "/team/aditya-raj-pundir.jpg"
+      image: "/2026/team/aditya-raj-pundir.jpg"
     },
     {
       name: "Aryaman Patel",
@@ -123,7 +123,7 @@ export default function TeamPage() {
       interests: "Rock climbing and watching sports",
       email: "pate2794@purdue.edu",
       linkedin: "https://www.linkedin.com/in/aryamanp7/",
-      image: "/team/aryaman-patel.jpg"
+      image: "/2026/team/aryaman-patel.jpg"
     }
   ];
 
@@ -139,7 +139,7 @@ export default function TeamPage() {
           <div className="flex justify-between items-center h-16">
             {/* Logo */}
             <Link
-              href="/"
+              href="/2026"
               className="flex items-center gap-3 cursor-pointer group"
             >
               <span className="font-racing text-lg relative" style={{ color: 'var(--racing-gold)' }}>
@@ -211,7 +211,7 @@ export default function TeamPage() {
 
           {/* Back to Home Link */}
           <Link
-            href="/"
+            href="/2026"
             className="inline-flex items-center gap-2 text-sm transition-colors duration-300 hover:text-[var(--racing-gold)] animate-fade-in-up delay-300"
             style={{ color: 'var(--text-secondary)' }}
           >
@@ -353,7 +353,7 @@ export default function TeamPage() {
             {/* Links */}
             <div className="flex gap-6">
               <Link
-                href="/"
+                href="/2026"
                 className="text-sm transition-colors hover:text-[var(--racing-gold)]"
                 style={{ color: 'var(--text-secondary)' }}
               >

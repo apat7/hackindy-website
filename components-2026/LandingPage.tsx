@@ -3,10 +3,10 @@
 import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import dynamic from 'next/dynamic';
-import { Icons } from '@/app/Icons';
-import StickerPeel from '@/app/StickerPeel';
+import { Icons } from '@/components-2026/Icons';
+import StickerPeel from '@/components-2026/StickerPeel';
 
-const FaultyTerminal = dynamic(() => import('@/components/FaultyTerminal'), {
+const FaultyTerminal = dynamic(() => import('@/components-2026/FaultyTerminal'), {
   ssr: false,
 });
 
@@ -124,7 +124,7 @@ export default function Home() {
       {/* Interactive Purdue Logo Sticker - hidden on mobile */}
       <div className="sticker-bounds-container hide-on-mobile">
         <StickerPeel
-          imageSrc="/Purdue Boilermakers Logo.png"
+          imageSrc="/2026/Purdue Boilermakers Logo.png"
           width={180}
           rotate={15}
           peelBackHoverPct={25}
@@ -202,7 +202,7 @@ export default function Home() {
                 </a>
               ))}
               <Link
-                href="/team"
+                href="/2026/team"
                 className="text-sm font-medium transition-colors duration-300 hover:text-[var(--racing-gold)]"
                 style={{ color: 'var(--text-secondary)' }}
               >
@@ -246,7 +246,7 @@ export default function Home() {
               </a>
             ))}
             <Link
-              href="/team"
+              href="/2026/team"
               className="mobile-menu-link"
               onClick={() => setMobileMenuOpen(false)}
             >
@@ -410,14 +410,14 @@ export default function Home() {
                       className="w-full h-full flex items-center justify-center transition-opacity hover:opacity-80"
                     >
                       <img
-                        src={`/sponsors/${sponsor.logo}`}
+                        src={`/2026/sponsors/${sponsor.logo}`}
                         alt={sponsor.name}
                         className="max-w-full max-h-full object-contain"
                       />
                     </a>
                   ) : (
                     <img
-                      src={`/sponsors/${sponsor.logo}`}
+                      src={`/2026/sponsors/${sponsor.logo}`}
                       alt={sponsor.name}
                       className="max-w-full max-h-full object-contain"
                     />
