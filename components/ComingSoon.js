@@ -59,7 +59,7 @@ function CopyEmailButton() {
       type="button"
       onClick={copy}
       title={CONTACT_EMAIL}
-      className="btn-plate pointer-events-auto sm:order-3"
+      className="btn-plate sm:order-3"
     >
       <span aria-live="polite">{copied ? "EMAIL COPIED ✓" : "CONTACT US"}</span>
     </button>
@@ -80,8 +80,9 @@ export default function ComingSoon() {
   }, []);
 
   return (
-    <main className="relative h-dvh w-full overflow-hidden bg-coal text-chalk select-none">
-      {/* MLH trust badge — official embed, must hang from the top edge */}
+    <main className="relative flex h-dvh w-full flex-col overflow-hidden bg-coal text-chalk select-none">
+      {/* MLH trust badge — official embed, must hang from the top edge.
+          Hidden below 640px (owner-accepted deviation from MLH placement). */}
       <a
         id="mlh-trust-badge"
         className="mlh-badge"
@@ -96,89 +97,87 @@ export default function ComingSoon() {
         />
       </a>
 
-      {/* layer 0 — particle wordmark (unmounted while the drive world covers it) */}
+      {/* background paint layer — full-bleed particle canvas; the spacer row
+          below reserves the region where the wordmark text lands */}
       {!covered && (
         <ParticleText
           text="HACK INDY"
           centerY={0.24}
-          className="font-display absolute inset-0 z-0 h-full w-full"
+          className="font-display pointer-events-none absolute inset-0 z-0 h-full w-full"
         />
       )}
 
-      {/* layer 1 — year, sitting right under the wordmark, behind the car */}
-      {!covered && (
-        <div
-          aria-hidden="true"
-          className="pointer-events-none absolute inset-x-0 top-[33%] z-[1] flex justify-center sm:top-[31%]"
-        >
-          <span
-            className="anim-rise font-display font-bold leading-none text-chalk"
-            style={{
-              fontSize: "clamp(2.75rem, 7vw, 5.5rem)",
-              letterSpacing: "0.28em",
-              textIndent: "0.28em",
-              animationDelay: "0.5s",
-            }}
-          >
-            2027
-          </span>
-        </div>
-      )}
-
-      {/* layer 2 — the car */}
-      {!covered && (
-        <IndyCarCanvas
-          className="anim-rise absolute inset-0 z-10"
-          onEnterDrive={canDrive ? enterDrive : undefined}
-        />
-      )}
-
-      {/* layer 3 — chrome */}
-      <div className="pointer-events-none absolute inset-0 z-20 flex flex-col font-mono">
+      {covered ? (
         <div className="flex-1" />
+      ) : (
+        <>
+          {/* spacer matching the wordmark text region (paired with centerY) */}
+          <div aria-hidden="true" className="h-[33dvh] flex-none sm:h-[31dvh]" />
 
-        {/* drag hint, sitting just under the car */}
-        <p
-          className="anim-rise mb-8 text-center text-[0.6rem] tracking-[0.5em] text-steel"
-          style={{ animationDelay: "1.4s", textIndent: "0.5em" }}
-        >
-          DRAG TO INSPECT{canDrive ? " · CLICK TO DRIVE" : ""}
-        </p>
-
-        {/* headline + CTAs */}
-        <div className="flex flex-col items-center gap-6 pb-12 sm:gap-7">
           <div
-            className="anim-rise text-center"
-            style={{ animationDelay: "0.7s" }}
+            aria-hidden="true"
+            className="anim-rise z-[1] flex flex-none justify-center"
+            style={{ animationDelay: "0.5s" }}
           >
-            <h1 className="font-display text-2xl font-bold tracking-[0.18em] text-chalk sm:text-3xl">
-              COMING SOON
-            </h1>
-            <p className="mt-2 text-[0.65rem] tracking-[0.35em] text-steel">
-              SPRING 2027 · INDIANAPOLIS, IN
-            </p>
+            <span
+              className="font-display font-bold leading-none text-chalk"
+              style={{
+                fontSize: "clamp(2.75rem, 7vw, 5.5rem)",
+                letterSpacing: "0.28em",
+                textIndent: "0.28em",
+              }}
+            >
+              2027
+            </span>
           </div>
 
-          <nav
-            className="anim-rise flex flex-col items-center gap-3 sm:flex-row sm:gap-4"
-            style={{ animationDelay: "0.85s" }}
-            aria-label="Primary"
-          >
-            <div className="flex justify-center sm:order-2">
-              <UpdateMe />
-            </div>
-            <a
-              href="/2026"
-              className="btn-plate pointer-events-auto sm:order-1"
-            >
-              <span>2026 SEASON</span>
-            </a>
-            <CopyEmailButton />
-          </nav>
+          {/* the car, contained in its own band — text below can't overlap it */}
+          <IndyCarCanvas
+            className="anim-rise z-10 min-h-0 w-full flex-1"
+            onEnterDrive={canDrive ? enterDrive : undefined}
+          />
+        </>
+      )}
+
+      {/* chrome — flows after the car band */}
+      <div
+        className="z-20 flex flex-none flex-col items-center font-mono"
+        style={{ paddingBottom: "max(3rem, env(safe-area-inset-bottom))" }}
+      >
+        <p
+          className="anim-rise mb-6 text-center text-[0.6rem] tracking-[0.5em] text-steel"
+          style={{ animationDelay: "1.4s", textIndent: "0.5em" }}
+        >
+          {finePointer
+            ? `DRAG TO INSPECT${canDrive ? " · CLICK TO DRIVE" : ""}`
+            : "TOUCH TO SPIN"}
+        </p>
+
+        <div className="anim-rise text-center" style={{ animationDelay: "0.7s" }}>
+          <h1 className="font-display text-2xl font-bold tracking-[0.18em] text-chalk sm:text-3xl">
+            COMING SOON
+          </h1>
+          <p className="mt-2 text-[0.65rem] tracking-[0.35em] text-steel">
+            SPRING 2027 · INDIANAPOLIS, IN
+          </p>
         </div>
+
+        <nav
+          className="anim-rise mt-6 grid w-full max-w-sm grid-cols-2 gap-3 px-6 sm:mt-7 sm:flex sm:w-auto sm:max-w-none sm:gap-4 sm:px-0"
+          style={{ animationDelay: "0.85s" }}
+          aria-label="Primary"
+        >
+          <div className="col-span-2 flex justify-center sm:order-2 sm:col-auto">
+            <UpdateMe />
+          </div>
+          <a href="/2026" className="btn-plate sm:order-1">
+            <span>2026 SEASON</span>
+          </a>
+          <CopyEmailButton />
+        </nav>
       </div>
 
-      {/* layer 4 — the drive world */}
+      {/* the drive world */}
       {driving && (
         <DriveBoundary onExit={exitDrive}>
           <DriveMode

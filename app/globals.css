@@ -41,11 +41,10 @@ body {
   z-index: 30;
 }
 
-@media (max-width: 640px) {
+@media (width < 640px) {
+  /* owner call (2026-07-11): badge off on phones — see mobile redesign spec */
   .mlh-badge {
-    right: 12px;
-    min-width: 50px;
-    max-width: 70px;
+    display: none;
   }
 }
 
@@ -110,6 +109,41 @@ body {
 .btn-plate--solid:hover > span,
 .btn-plate--solid:focus-visible > span {
   background: #e6d8b4;
+}
+
+/* touch feedback — mirror the hover fill on press */
+.btn-plate:active > span {
+  background: var(--color-gold);
+  color: var(--color-coal);
+}
+
+.btn-plate--solid:active > span {
+  background: #e6d8b4;
+}
+
+/* compact plates on phones: fill the CTA grid instead of forcing 13rem
+   columns (must sit after the base .btn-plate rules to win the cascade) */
+@media (width < 640px) {
+  .btn-plate {
+    width: 100%;
+  }
+
+  .btn-plate > span {
+    width: 100%;
+    min-width: 0;
+    padding: 0.9rem 0.5rem;
+    font-size: 0.65rem;
+    letter-spacing: 0.18em;
+    text-indent: 0.18em;
+  }
+
+  .btn-plate--form > span {
+    padding: 0;
+  }
+
+  .btn-plate--form input {
+    max-width: 48vw;
+  }
 }
 
 /* form variant - chamfered plate wrapping an inline email input */
