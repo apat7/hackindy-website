@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef } from "react";
+import { sampleStep, dotRadius, shimmerAmp } from "./particleTuning";
 
 // White shade buckets — particles are grouped by style so each frame draws
 // one path per bucket instead of one fill per dot.
@@ -83,7 +84,7 @@ export default function ParticleText({
 
       const data = octx.getImageData(0, 0, width, height).data;
       // finer sampling grid = denser, smaller dots (r scales with step)
-      const step = Math.max(4, Math.round(fontSize / 38));
+      const step = sampleStep(fontSize);
       const next = [];
       for (let y = 0; y < height; y += step) {
         for (let x = 0; x < width; x += step) {
@@ -95,10 +96,10 @@ export default function ParticleText({
               hy: y + (Math.random() - 0.5) * step * 0.4,
               vx: 0,
               vy: 0,
-              r: step * (0.09 + Math.random() * 0.09),
+              r: dotRadius(step, Math.random()),
               s: (Math.random() * STYLES.length) | 0,
               ph: Math.random() * TAU,
-              amp: 2.2 + Math.random() * 3,
+              amp: shimmerAmp(step, Math.random()),
               sp: 0.8 + Math.random() * 1.4,
             });
           }
