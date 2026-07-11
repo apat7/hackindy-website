@@ -58,9 +58,15 @@ bottom); no content layer uses absolute positioning anymore:
 Band heights marked with `~` are starting values — tune them during visual
 verification; the invariant is the row order and that rows never overlap.
 
-- `ParticleText` already sizes text to its own canvas box and listens for the
-  pointer on `window`, so containment preserves desktop interaction. Pass
-  `centerY` ≈ 0.5 now that the band is dedicated.
+- **Amendment (2026-07-11, during planning):** the wordmark canvas stays a
+  full-bleed background layer (`absolute inset-0 z-0`, pointer-transparent)
+  rather than becoming a contained band. A contained band would cap the
+  desktop font ~10% smaller and clip cursor-scattered dots at the band edge
+  (~18px of headroom vs ~100px push radius), violating the "desktop visually
+  identical" requirement. Instead the flow column reserves an empty spacer row
+  (`~33dvh` phone / `~31dvh` desktop, matching today's `top-[33%]`/`[31%]`
+  year placement) where the wordmark text lands. The canvas is paint, not
+  layout; every *content* row flows, so content overlap remains impossible.
 - `IndyCarCanvas`'s `CameraRig` already derives FOV from canvas aspect, so the
   contained band re-frames automatically; tune FOV thresholds only if the car
   clips.
