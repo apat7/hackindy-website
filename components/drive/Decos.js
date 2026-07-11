@@ -8,22 +8,71 @@ import { RigidBody, CylinderCollider } from "@react-three/rapier";
 const _box = new THREE.Box3();
 const yQuat = (rad) => ({ x: 0, y: Math.sin(rad / 2), z: 0, w: Math.cos(rad / 2) });
 
-// wheels.glb holds two complete wheels tilted diagonally in model space.
-// These lay-flat rotations were solved offline by minimizing vertical extent
-// (gold wheel = smaller x in the pair, black = larger).
-const WHEEL_ROTATIONS = [
-  [134, 90],
-  [137, 90],
-];
 const WHEEL_DIAMETER = 1.35;
 const CONE_HEIGHT = 0.85;
+
+// Find the (rx, rz) rotation that minimizes the object's vertical extent —
+// i.e., lays a wheel flat. Solved at RUNTIME against the loaded geometry:
+// hardcoded angles go stale the moment the asset is re-exported (compression
+// bakes new transforms), which is exactly how the wheels ended up standing
+// upright inside squat colliders.
+function solveLayFlat(group) {
+  group.updateMatrixWorld(true);
+  const pts = [];
+  const v = new THREE.Vector3();
+  group.traverse((o) => {
+    if (!o.isMesh) return;
+    const pos = o.geometry.attributes.position;
+    const step = Math.max(1, Math.floor(pos.count / 400));
+    for (let i = 0; i < pos.count; i += step) {
+      v.fromBufferAttribute(pos, i).applyMatrix4(o.matrixWorld);
+      pts.push(v.x, v.y, v.z);
+    }
+  });
+  if (pts.length < 9) return { rx: 0, rz: 0 };
+  const e = new THREE.Euler();
+  const m = new THREE.Matrix4();
+  const DEG = Math.PI / 180;
+  const heightAt = (rx, rz) => {
+    e.set(rx * DEG, 0, rz * DEG);
+    m.makeRotationFromEuler(e);
+    // rotated y = row 2 of the matrix (column-major elements 1, 5, 9)
+    const y1 = m.elements[1];
+    const y2 = m.elements[5];
+    const y3 = m.elements[9];
+    let lo = Infinity;
+    let hi = -Infinity;
+    for (let i = 0; i < pts.length; i += 3) {
+      const y = y1 * pts[i] + y2 * pts[i + 1] + y3 * pts[i + 2];
+      if (y < lo) lo = y;
+      if (y > hi) hi = y;
+    }
+    return hi - lo;
+  };
+  let best = { h: Infinity, rx: 0, rz: 0 };
+  for (let rx = 0; rx < 180; rx += 10) {
+    for (let rz = 0; rz < 180; rz += 10) {
+      const h = heightAt(rx, rz);
+      if (h < best.h) best = { h, rx, rz };
+    }
+  }
+  const coarse = { ...best };
+  for (let rx = coarse.rx - 9; rx <= coarse.rx + 9; rx += 1.5) {
+    for (let rz = coarse.rz - 9; rz <= coarse.rz + 9; rz += 1.5) {
+      const h = heightAt(rx, rz);
+      if (h < best.h) best = { h, rx, rz };
+    }
+  }
+  return best;
+}
 
 // wrap `object` so it lies flat, scaled to `targetDiameter`, bottom at y=0.
 // Returns null for degenerate input — a zero/NaN-sized collider panics the
 // rapier WASM and poisons the whole world ("recursive use of an object").
-function prep(object, rotDeg, targetDiameter) {
+function prep(object, targetDiameter) {
+  const flat = solveLayFlat(object);
   const inner = new THREE.Group();
-  inner.rotation.set((rotDeg[0] * Math.PI) / 180, 0, (rotDeg[1] * Math.PI) / 180);
+  inner.rotation.set((flat.rx * Math.PI) / 180, 0, (flat.rz * Math.PI) / 180);
   inner.add(object);
   inner.updateMatrixWorld(true);
 
@@ -40,7 +89,7 @@ function prep(object, rotDeg, targetDiameter) {
   let mainArea = 0;
   const boxes = new Map();
   for (const k of kids) {
-    const b = new THREE.Box3().setFromObject(k);
+    const b = new THREE.Box3().setFromObject(k, true); // precise: vertex-exact
     boxes.set(k, b);
     const s = b.getSize(new THREE.Vector3());
     const area = s.x * s.z;
@@ -61,7 +110,9 @@ function prep(object, rotDeg, targetDiameter) {
   }
   inner.updateMatrixWorld(true);
 
-  _box.setFromObject(inner);
+  // precise=true measures vertices; the default rotates local AABBs and
+  // inflates diagonally-oriented content by up to √2 (this floated the wheels)
+  _box.setFromObject(inner, true);
   const size = _box.getSize(new THREE.Vector3());
   if (!isFinite(size.x) || !isFinite(size.y) || Math.max(size.x, size.z) < 0.01) {
     return null;
@@ -132,9 +183,12 @@ function geometryComponents(geo) {
     const rb = find(b);
     if (ra !== rb) parent[ra] = rb;
   };
+  // 1 cm weld buckets: meshopt quantization jitters positions by ~1 mm, so a
+  // finer tolerance shatters the tire into hundreds of islands and the
+  // two-wheel clustering seeds from garbage fragments
   const byPos = new Map();
   for (let i = 0; i < n; i++) {
-    const key = `${pos.getX(i).toFixed(3)},${pos.getY(i).toFixed(3)},${pos.getZ(i).toFixed(3)}`;
+    const key = `${pos.getX(i).toFixed(2)},${pos.getY(i).toFixed(2)},${pos.getZ(i).toFixed(2)}`;
     const seen = byPos.get(key);
     if (seen === undefined) byPos.set(key, i);
     else union(i, seen);
@@ -218,7 +272,7 @@ function partitionWheels(scene) {
   // deterministic order: smaller centroid-x first (the gold wheel)
   if (groups.length === 2) {
     const gx = (g) => {
-      _box.setFromObject(g);
+      _box.setFromObject(g, true);
       return (_box.min.x + _box.max.x) / 2;
     };
     groups.sort((a, b) => gx(a) - gx(b));
@@ -233,9 +287,7 @@ function useWheelDecos() {
     const clone = scene.clone(true);
     clone.updateMatrixWorld(true); // clones carry stale render matrices
     const parts = partitionWheels(clone);
-    return parts
-      .map((part, i) => prep(part, WHEEL_ROTATIONS[i % WHEEL_ROTATIONS.length], WHEEL_DIAMETER))
-      .filter(Boolean);
+    return parts.map((part) => prep(part, WHEEL_DIAMETER)).filter(Boolean);
   }, [scene]);
 }
 
@@ -273,7 +325,7 @@ function useConeDeco() {
   return useMemo(() => {
     const clone = scene.clone(true);
     clone.updateMatrixWorld(true);
-    _box.setFromObject(clone);
+    _box.setFromObject(clone, true);
     const size = _box.getSize(new THREE.Vector3());
     const center = _box.getCenter(new THREE.Vector3());
     const s = CONE_HEIGHT / size.y;
