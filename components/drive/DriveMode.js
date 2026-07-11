@@ -197,6 +197,8 @@ export default function DriveMode({ onExit, onCovered, reduceMotion }) {
             shadow-camera-bottom={-70}
             shadow-camera-far={120}
           />
+          {/* fill from the spawn side so the car's tail isn't pure shadow */}
+          <directionalLight position={[-12, 18, 35]} intensity={0.9} />
           <Environment files="/night_sky.hdr" />
           <Physics timeStep={1 / 60}>
             <DriveWorld register={register} shake={shake} reduceMotion={reduceMotion} />

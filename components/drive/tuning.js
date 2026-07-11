@@ -44,5 +44,5 @@ export const TUNING = {
   letterDensity: 0.4,
   letterFriction: 0.7,
   letterRestitution: 0.2,
-  impactForceMin: 2500, // onContactForce threshold for shake/glint
+  impactForceMin: 1200, // onContactForce threshold for shake/glint (calibrated: resting contacts ≈40, full-speed hits ≈5500)
 };
