@@ -5,6 +5,7 @@ import { Canvas } from "@react-three/fiber";
 import { Environment } from "@react-three/drei";
 import { Physics } from "@react-three/rapier";
 import DriveWorld from "./DriveWorld";
+import DriveCar, { ChaseCamera, SPAWN } from "./DriveCar";
 
 // Mounts only once Suspense inside the Canvas has resolved — signals "world ready".
 function SceneReady({ onReady }) {
@@ -99,10 +100,26 @@ function StartLights({ ready, reduceMotion, onCovered, onDone }) {
 export default function DriveMode({ onExit, onCovered, reduceMotion }) {
   const [ready, setReady] = useState(false);
   const [revealed, setRevealed] = useState(false);
+  const telemetry = useRef({
+    x: SPAWN.x,
+    z: SPAWN.z,
+    yaw: SPAWN.yaw,
+    fx: Math.sin(SPAWN.yaw),
+    fz: Math.cos(SPAWN.yaw),
+    speed: 0,
+    slip: 0,
+    handbrake: false,
+    burnout: false,
+    rl: { x: 0, z: 0 },
+    rr: { x: 0, z: 0 },
+  });
+  const shake = useRef(0);
+  const resetSignal = useRef(0);
 
   useEffect(() => {
     const onKey = (e) => {
       if (e.key === "Escape") onExit();
+      if (e.code === "KeyR") resetSignal.current++;
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
@@ -141,7 +158,9 @@ export default function DriveMode({ onExit, onCovered, reduceMotion }) {
           <Environment files="/night_sky.hdr" />
           <Physics timeStep={1 / 60}>
             <DriveWorld />
+            <DriveCar telemetry={telemetry} resetSignal={resetSignal} />
           </Physics>
+          <ChaseCamera telemetry={telemetry} shake={shake} reduceMotion={reduceMotion} />
           <SceneReady onReady={() => setReady(true)} />
         </Suspense>
       </Canvas>
