@@ -112,13 +112,15 @@ function IndyCar({ reduceMotion, onEnter }) {
 
 useGLTF.preload("/indycar.glb");
 
-// Widen the view on narrow screens so the car never fills the frame.
+// The canvas lives in a short, wide band now; distance stays fixed, so a
+// smaller fov is optically a tighter crop of the same render — the wider
+// (shorter) the band, the tighter we crop to keep the car near full size.
 function CameraRig() {
   const camera = useThree((s) => s.camera);
   const size = useThree((s) => s.size);
   useEffect(() => {
     const aspect = size.width / size.height;
-    camera.fov = aspect < 0.8 ? 46 : aspect < 1.4 ? 31 : 25;
+    camera.fov = aspect < 0.8 ? 46 : aspect < 1.4 ? 31 : aspect < 3.2 ? 20 : 9;
     camera.updateProjectionMatrix();
   }, [camera, size]);
   return null;
@@ -127,12 +129,13 @@ function CameraRig() {
 export default function IndyCarCanvas({ className = "", onEnterDrive }) {
   const [autoRotate, setAutoRotate] = useState(true);
   const reduceMotion = useMediaQuery("(prefers-reduced-motion: reduce)");
+  const coarsePointer = useMediaQuery("(pointer: coarse)");
 
   return (
     <div className={className}>
       <Canvas
         camera={{ position: [5.6, 2.2, 6.8], fov: 25 }}
-        dpr={[1, 2]}
+        dpr={coarsePointer ? [1, 1.5] : [1, 2]}
         gl={{ antialias: true, alpha: true }}
       >
         <CameraRig />
@@ -145,12 +148,15 @@ export default function IndyCarCanvas({ className = "", onEnterDrive }) {
           <Environment files="/night_sky.hdr" />
           <IndyCar reduceMotion={reduceMotion} onEnter={onEnterDrive} />
         </Suspense>
+        {/* the easter-egg lap that moves the car is desktop-only, so the
+            shadow can bake a single frame on touch devices */}
         <ContactShadows
           position={[0, 0, 0]}
           opacity={0.6}
           scale={9}
           blur={2.6}
           far={1.4}
+          frames={coarsePointer ? 1 : Infinity}
         />
         <OrbitControls
           makeDefault
