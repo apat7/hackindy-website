@@ -67,9 +67,13 @@ verification; the invariant is the row order and that rows never overlap.
   (`~33dvh` phone / `~31dvh` desktop, matching today's `top-[33%]`/`[31%]`
   year placement) where the wordmark text lands. The canvas is paint, not
   layout; every *content* row flows, so content overlap remains impossible.
-- `IndyCarCanvas`'s `CameraRig` already derives FOV from canvas aspect, so the
-  contained band re-frames automatically; tune FOV thresholds only if the car
-  clips.
+- **Amendment 2 (2026-07-11, post-review):** the car canvas is ALSO a
+  full-viewport paint layer, not a contained band. A band-sized frustum fits
+  the at-rest car but not the orbit tilt — a top-down car projects ~3× its
+  side-on height and blew past the band edges. The flow column keeps a
+  `flex-1` spacer where the band sits, the fov curve stays the original
+  (46/31/25), and portrait aspects dolly the camera out (distance 11.6 vs
+  9.05) so the car's full length clears the narrow view at any yaw.
 - The MLH badge keeps its `fixed` top-edge placement on desktop; add
   `display: none` below 640px.
 - The `anim-rise` entrance stagger, drive-mode entry (desktop-only via
