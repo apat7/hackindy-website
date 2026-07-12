@@ -34,6 +34,10 @@ export const TUNING = {
   // car visuals
   blurSpeed: 17, // m/s at which rim-blur discs appear
   maxVisualSteer: 0.42, // rad, front-wheel yaw
+  leanPerSlip: 0.015, // rad of body roll per unit of slip
+  leanMax: 0.12, // rad — hard cap; lean pivots at axle height so wheels hold the floor
+  pitchBrake: 0.014, // rad of brake dive
+  pitchThrottle: 0.01, // rad of throttle squat
 
   // effects — tires only mark/smoke when actually overwhelmed:
   // hard lateral slip, or full throttle below the traction speed

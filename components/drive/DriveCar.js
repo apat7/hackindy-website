@@ -7,7 +7,7 @@ import { useGLTF } from "@react-three/drei";
 import { RigidBody, CuboidCollider } from "@react-three/rapier";
 import { setRimBlur } from "../livery";
 import useDriveControls from "./useDriveControls";
-import { createCarState, stepCar } from "./carPhysics";
+import { createCarState, stepCar, leanTargets } from "./carPhysics";
 import { TUNING as T } from "./tuning";
 
 export const SPAWN = { x: 0, z: 16, yaw: Math.PI }; // facing the letter row at z=0
@@ -99,6 +99,7 @@ export default function DriveCar({ telemetry, resetSignal, register }) {
         modelYaw: rig.forwardSign > 0 ? 0 : Math.PI,
         rearAxle: size.z * s * 0.36, // distance behind center, ≈ rear axle
         halfTrack: size.x * s * 0.4,
+        axleY: rig.radius * s, // world-space axle height — the lean pivot
       },
     };
   }, [scene]);
@@ -141,10 +142,9 @@ export default function DriveCar({ telemetry, resetSignal, register }) {
       if (p.front) p.pivot.rotation.y = steerVisual.current * rig.forwardSign;
     }
     if (leanRef.current) {
-      const lateral = s.slip * Math.sign(s.yawRate || 1);
+      const { roll, pitch } = leanTargets(s, input, T);
       leanRef.current.rotation.z +=
-        (lateral * 0.015 - leanRef.current.rotation.z) * Math.min(1, 6 * dt);
-      const pitch = (input.brake ? 0.014 : 0) - (input.throttle ? 0.01 : 0);
+        (roll - leanRef.current.rotation.z) * Math.min(1, 6 * dt);
       leanRef.current.rotation.x +=
         (pitch - leanRef.current.rotation.x) * Math.min(1, 6 * dt);
     }
@@ -188,9 +188,16 @@ export default function DriveCar({ telemetry, resetSignal, register }) {
       rotation={[0, SPAWN.yaw, 0]}
     >
       <CuboidCollider args={fit.half} position={[0, fit.half[1], 0]} />
-      <group ref={leanRef}>
-        <group rotation-y={fit.modelYaw} scale={fit.s}>
-          <primitive object={clone} position={fit.offset} />
+      {/* lean pivots at axle height: contact patches then dip only by
+          h·(1−cosθ) — millimeters — instead of sinθ·halfTrack, which sank
+          the outer wheels through the floor mid-drift */}
+      <group position={[0, fit.axleY, 0]}>
+        <group ref={leanRef}>
+          <group position={[0, -fit.axleY, 0]}>
+            <group rotation-y={fit.modelYaw} scale={fit.s}>
+              <primitive object={clone} position={fit.offset} />
+            </group>
+          </group>
         </group>
       </group>
     </RigidBody>

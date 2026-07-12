@@ -12,6 +12,17 @@ export function createCarState(x = 0, z = 0, yaw = 0) {
   return { x, z, yaw, vx: 0, vz: 0, speed: 0, slip: 0, yawRate: 0 };
 }
 
+// Cosmetic body-lean targets. Roll is clamped: slip reaches ~20 in a
+// full-speed handbrake drift, and an unclamped roll about anything but the
+// exact contact line would sink the outer wheels through the floor.
+export function leanTargets(state, input, T) {
+  const lateral = state.slip * Math.sign(state.yawRate || 1);
+  const roll = Math.max(-T.leanMax, Math.min(T.leanMax, lateral * T.leanPerSlip));
+  const pitch =
+    (input.brake > 0 ? T.pitchBrake : 0) - (input.throttle > 0 ? T.pitchThrottle : 0);
+  return { roll, pitch };
+}
+
 export function stepCar(state, input, dt, T) {
   const fx = Math.sin(state.yaw);
   const fz = Math.cos(state.yaw);
