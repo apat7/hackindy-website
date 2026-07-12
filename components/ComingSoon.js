@@ -59,7 +59,7 @@ function CopyEmailButton() {
       type="button"
       onClick={copy}
       title={CONTACT_EMAIL}
-      className="btn-plate sm:order-3"
+      className="btn-plate pointer-events-auto sm:order-3"
     >
       <span aria-live="polite">{copied ? "EMAIL COPIED ✓" : "CONTACT US"}</span>
     </button>
@@ -107,6 +107,16 @@ export default function ComingSoon() {
         />
       )}
 
+      {/* car paint layer — full viewport like the wordmark, so orbit tilt has
+          headroom in every direction; the flex-1 spacer below reserves its
+          at-rest band in the flow */}
+      {!covered && (
+        <IndyCarCanvas
+          className="anim-rise absolute inset-0 z-10"
+          onEnterDrive={canDrive ? enterDrive : undefined}
+        />
+      )}
+
       {covered ? (
         <div className="flex-1" />
       ) : (
@@ -131,17 +141,17 @@ export default function ComingSoon() {
             </span>
           </div>
 
-          {/* the car, contained in its own band — text below can't overlap it */}
-          <IndyCarCanvas
-            className="anim-rise z-10 min-h-0 w-full flex-1"
-            onEnterDrive={canDrive ? enterDrive : undefined}
-          />
+          {/* car band spacer — the footer flows below it, so text keeps clear
+              of the car at rest on any screen height */}
+          <div aria-hidden="true" className="min-h-0 flex-1" />
         </>
       )}
 
-      {/* chrome — flows after the car band */}
+      {/* chrome — flows after the car band; pointer-events-none so orbit
+          drags pass through to the car canvas underneath (buttons opt back
+          in), matching the original layered behavior */}
       <div
-        className="z-20 flex flex-none flex-col items-center font-mono"
+        className="pointer-events-none z-20 flex flex-none flex-col items-center font-mono"
         style={{ paddingBottom: "max(3rem, env(safe-area-inset-bottom))" }}
       >
         <p
@@ -170,7 +180,7 @@ export default function ComingSoon() {
           <div className="col-span-2 flex justify-center sm:order-2 sm:col-auto">
             <UpdateMe />
           </div>
-          <a href="/2026" className="btn-plate sm:order-1">
+          <a href="/2026" className="btn-plate pointer-events-auto sm:order-1">
             <span>2026 SEASON</span>
           </a>
           <CopyEmailButton />

@@ -112,15 +112,20 @@ function IndyCar({ reduceMotion, onEnter }) {
 
 useGLTF.preload("/indycar.glb");
 
-// The canvas lives in a short, wide band now; distance stays fixed, so a
-// smaller fov is optically a tighter crop of the same render — the wider
-// (shorter) the band, the tighter we crop to keep the car near full size.
+// Widen the view on narrow screens so the car never fills the frame. The
+// canvas must stay full-viewport: a tight band-sized fov leaves no headroom
+// for the orbit tilt (a top-down car projects ~3x its side-on height).
 function CameraRig() {
   const camera = useThree((s) => s.camera);
   const size = useThree((s) => s.size);
   useEffect(() => {
     const aspect = size.width / size.height;
-    camera.fov = aspect < 0.8 ? 46 : aspect < 1.4 ? 31 : aspect < 3.2 ? 20 : 9;
+    camera.fov = aspect < 0.8 ? 46 : aspect < 1.4 ? 31 : 25;
+    // portrait: dolly out (not crop) so the car's full length clears the
+    // narrow view at any autorotate yaw; setLength keeps the orbit direction
+    const dist = aspect < 0.8 ? 11.6 : 9.05;
+    const target = new THREE.Vector3(0, 0.5, 0); // OrbitControls target
+    camera.position.sub(target).setLength(dist).add(target);
     camera.updateProjectionMatrix();
   }, [camera, size]);
   return null;
